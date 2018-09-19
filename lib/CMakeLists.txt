@@ -1,0 +1,1 @@
+add_library(httpClientLibrary httpClientLibrary/http.c)
