@@ -1,1 +1,1 @@
-add_library(httpClientLibrary httpClientLibrary/http.c)
+add_library(httpClientLibrary STATIC httpClientLibrary/http.c)

@@ -7,9 +7,9 @@ enable_testing()
 
 set(SOURCES src/main.c)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     set(warnings "-Wall -Wextra -Werror")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
     set(warnings "/W4 /WX /EHsc")
 endif()
 
@@ -20,11 +20,11 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)
-add_subdirectory(lib)
 
-add_executable(comp445_lab_assignment_1 ${SOURCES})
-target_link_libraries(comp445_lab_assignment_1 httpClientLibrary)
+add_executable(httpc ${SOURCES})
+target_link_libraries(httpc httpClientLibrary)
 
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL "A flag showing that CMake has configured at least once.")
