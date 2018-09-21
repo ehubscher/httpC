@@ -1,6 +1,12 @@
+# OS Specific
 .DS_Store
 
+# IDE Specific
 /.vscode
+/.idea
+/cmake-build-debug
+
+# Build Artifacts
 /build
 /bin
 /obj
