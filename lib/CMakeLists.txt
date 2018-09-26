@@ -1,5 +1,5 @@
-add_library(httpClientLibrary STATIC httpClientLibrary/http.c)
+#add_library(httpClientLibrary STATIC httpClientLibrary/http.c)
 
-set(INCLUDE httpClientLibrary)
+#set(INCLUDE httpClientLibrary)
 
-target_include_directories(httpClientLibrary PUBLIC ${INCLUDE})
+#target_include_directories(httpClientLibrary PUBLIC ${INCLUDE})

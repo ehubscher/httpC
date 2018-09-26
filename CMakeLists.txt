@@ -24,7 +24,10 @@ add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)
 
+# include header-only library
+include_directories(lib/httpClientLibrary)
+
 add_executable(httpc ${SOURCES})
-target_link_libraries(httpc httpClientLibrary)
+#target_link_libraries(httpc httpClientLibrary)
 
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL "A flag showing that CMake has configured at least once.")
