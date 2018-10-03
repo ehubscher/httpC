@@ -8,7 +8,7 @@ enable_testing()
 set(SOURCES src/main.c)
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-    set(warnings "-Wall -Wextra -Werror")
+    set(warnings "-Wall -Wextra")
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
     set(warnings "/W4 /WX /EHsc")
 endif()
