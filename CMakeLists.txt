@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-project("COMP 445 Lab Assignment 1")
+project("httpC")
 
 enable_testing()
 
-set(SOURCES src/main.c)
+set(SOURCES src/httpC-cli.c)
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     set(warnings "-Wall -Wextra")
@@ -27,7 +27,7 @@ add_subdirectory(test)
 # include header-only library
 include_directories(lib/httpClientLibrary)
 
-add_executable(httpc ${SOURCES})
+add_executable(httpC-cli ${SOURCES})
 #target_link_libraries(httpc httpClientLibrary)
 
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL "A flag showing that CMake has configured at least once.")

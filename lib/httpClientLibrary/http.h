@@ -33,6 +33,7 @@ static const char* HTTP_GENERAL_HEADERS[9] = {
     "Via",
     "Warning"
 };
+
 static const char* HTTP_REQUEST_HEADERS[19] = {
     "Accept",
     "Accept-Charset",
@@ -54,6 +55,7 @@ static const char* HTTP_REQUEST_HEADERS[19] = {
     "TE",
     "User-Agent"
 };
+
 static const char* HTTP_ENTITY_HEADERS[10] = {
     "Allow",
     "Content-Encoding",
@@ -125,7 +127,7 @@ void constructRequestLine(HttpRequest* request) {
 
     request->requestLine = concat(request->requestLine, request->method);
     request->requestLine = concat(request->requestLine, " ");
-    
+
     request->requestLine = concat(request->requestLine, request->requestURI);
     request->requestLine = concat(request->requestLine, " ");
 

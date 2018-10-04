@@ -1,6 +1,6 @@
-# COMP445_lab_assignment
+# httpC
 
-This repository contains the collective COMP 445 Lab Assignment(s).
+This repository contains an HTTP 1.0/1.1 client implementation in C.
 
 1. To build this project, make sure that make, CMake, cmocka, and a C compiler are installed on your machine
 (i.e. gcc, clang, llvm, etc.)
