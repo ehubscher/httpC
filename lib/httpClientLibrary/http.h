@@ -1,9 +1,17 @@
+#ifndef HTTP_CLIENT
+#define HTTP_CLIENT
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#ifndef HTTP_CLIENT
-#define HTTP_CLIENT
+#define HTTP_METHODS_SIZE 8
+#define HTTP_GENERAL_HEADERS_SIZE 9
+#define HTTP_REQUEST_HEADERS_SIZE 19
+#define HTTP_RESPONSE_HEADERS_SIZE 9
+#define HTTP_ENTITY_HEADERS_SIZE 10
+#define HTTP_STATUS_CODES_SIZE 40
+#define HTTP_REASON_PHRASES_SIZE 40
 
 typedef enum HTTP_MESSAGE_TYPES HTTP_MESSAGE_TYPES;
 enum HTTP_MESSAGE_TYPES {
@@ -11,7 +19,7 @@ enum HTTP_MESSAGE_TYPES {
     RESPONSE
 };
 
-static const char* HTTP_METHODS[8] = {
+static const char* HTTP_METHODS[HTTP_METHODS_SIZE] = {
     "GET",
     "POST",
     "PUT",
@@ -22,7 +30,7 @@ static const char* HTTP_METHODS[8] = {
     "CONNECT"
 };
 
-static const char* HTTP_GENERAL_HEADERS[9] = {
+static const char* HTTP_GENERAL_HEADERS[HTTP_GENERAL_HEADERS_SIZE] = {
     "Cache-Control",
     "Connection",
     "Date",
@@ -34,7 +42,7 @@ static const char* HTTP_GENERAL_HEADERS[9] = {
     "Warning"
 };
 
-static const char* HTTP_REQUEST_HEADERS[19] = {
+static const char* HTTP_REQUEST_HEADERS[HTTP_REQUEST_HEADERS_SIZE] = {
     "Accept",
     "Accept-Charset",
     "Accept-Encoding",
@@ -56,7 +64,7 @@ static const char* HTTP_REQUEST_HEADERS[19] = {
     "User-Agent"
 };
 
-static const char* HTTP_RESPONSE_HEADERS[9] = {
+static const char* HTTP_RESPONSE_HEADERS[HTTP_RESPONSE_HEADERS_SIZE] = {
     "Accept-Ranges",
     "Age",
     "ETag",
@@ -68,7 +76,7 @@ static const char* HTTP_RESPONSE_HEADERS[9] = {
     "WWW-Authenticate"
 };
 
-static const char* HTTP_ENTITY_HEADERS[10] = {
+static const char* HTTP_ENTITY_HEADERS[HTTP_ENTITY_HEADERS_SIZE] = {
     "Allow",
     "Content-Encoding",
     "Content-Language",
@@ -81,7 +89,7 @@ static const char* HTTP_ENTITY_HEADERS[10] = {
     "Last-Modified"
 };
 
-static const char* HTTP_STATUS_CODES[40] = {
+static const char* HTTP_STATUS_CODES[HTTP_STATUS_CODES_SIZE] = {
     // 1xx: Informational - Request received, continuing process.
     "100",
     "101",
@@ -133,7 +141,7 @@ static const char* HTTP_STATUS_CODES[40] = {
     "505"
 };
 
-static const char* HTTP_REASON_PHRASES[40] = {
+static const char* HTTP_REASON_PHRASES[HTTP_REASON_PHRASES_SIZE] = {
     // 1xx: Informational - Request received, continuing process.
     "Continue",
     "Switching Protocols",
@@ -187,129 +195,20 @@ static const char* HTTP_REASON_PHRASES[40] = {
 
 char* concat(const char* s1, const char* s2)
 {
+    char* result = "\0";
     // +1 for the null-terminator
     int resultSize = strlen(s1) + strlen(s2) + 1;
-    char* result = (char*)malloc(resultSize);
+    result = (char*)malloc(resultSize);
 
     if (result == NULL) {
         fprintf(stderr, "ERROR: httpClientLibrary::concat() - Failed to allocate memory for string concatenation.\n");
-        exit(-1);
+        return result;
     }
 
     strcpy(result, s1);
     strcat(result, s2);
 
     return result;
-}
-
-typedef struct http_message HttpMessage;
-struct http_message {
-    HTTP_MESSAGE_TYPES messageType;
-
-    char* startLine;
-    char* messageBody;
-    char* message;
-
-    char* headers[];
-};
-
-int sendMessage(HttpMessage* message);
-HttpMessage* receiveMessage();
-
-typedef struct http_request HttpRequest;
-struct http_request {
-    // i.e. GET|POST
-    char* method;
-    // i.e. host + path + query string
-    char* requestURI;
-    // i.e. HTTP/${VERSION}
-    char* protocolVersion;
-
-    char* requestLine;
-    // Will be replaced by entity body given a "Transfer-Encoding" header.
-    char* requestBody;
-
-    char* request;
-
-    void (*constructRequestLine)(HttpRequest*);
-
-    // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
-    char* headers[];
-};
-
-void constructRequestLine(HttpRequest* request);
-void constructRequestLine(HttpRequest* request) {
-    request->requestLine = '\0';
-
-    request->requestLine = concat(request->requestLine, request->method);
-    request->requestLine = concat(request->requestLine, " ");
-
-    request->requestLine = concat(request->requestLine, request->requestURI);
-    request->requestLine = concat(request->requestLine, " ");
-
-    request->requestLine = concat(request->requestLine, request->protocolVersion);
-    request->requestLine = concat(request->requestLine, " ");
-
-    request->requestLine = concat(request->requestLine, "\r\n");
-}
-
-HttpMessage* constructHttpMessageFromRequest(HttpRequest* request);
-HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
-    HttpMessage message;
-    HttpMessage* messagePtr = &message;
-    messagePtr->messageType = REQUEST;
-    
-    request->constructRequestLine(request);
-    messagePtr->startLine = request->requestLine;
-}
-
-typedef struct http_response HttpResponse;
-struct http_response {
-    // i.e. HTTP/${VERSION}
-    char* protocolVersion;
-    // i.e. 200
-    char* statusCode;
-    // i.e. OK
-    char* reasonPhrase;
-
-    char* statusLine;
-    // Will be replaced by entity body given a "Transfer-Encoding" header.
-    // All responses to the HEAD request method MUST NOT include a message-body,
-    // even though the presence of entity- header fields might lead one to believe they do.
-    // All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST NOT include a message-body.
-    // All other responses do include a message-body, although it MAY be of zero length. 
-    char* responseBody;
-
-    void (*constructStatusLine)(HttpResponse*);
-
-    // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
-    char* headers[];
-};
-
-void constructStatusLine(HttpResponse* response);
-void constructStatusLine(HttpResponse* response) {
-    response->statusLine = '\0';
-
-    response->statusLine = concat(response->statusLine, response->protocolVersion);
-    response->statusLine = concat(response->statusLine, " ");
-
-    response->statusLine = concat(response->statusLine, response->statusCode);
-    response->statusLine = concat(response->statusLine, " ");
-
-    response->statusLine = concat(response->statusLine, response->reasonPhrase);
-    response->statusLine = concat(response->statusLine, " ");
-
-    response->statusLine = concat(response->statusLine, "\r\n");
-}
-
-HttpMessage* constructHttpMessageFromResponse(HttpResponse* response);
-HttpMessage* constructHttpMessageFromResponse(HttpResponse* response) {
-    HttpMessage message;
-    HttpMessage* messagePtr = &message;
-    messagePtr->messageType = RESPONSE;
-
-    response->constructStatusLine(response);
-    messagePtr->startLine = response->statusLine;
 }
 
 #endif
