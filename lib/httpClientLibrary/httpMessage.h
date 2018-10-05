@@ -16,16 +16,30 @@ struct http_message {
     HttpMessage* (*receiveMessage)();
 
 
-    size_t headersSize;
+    unsigned int headersSize;
     char* headers[][2];
 };
 
 void constructHttpMessage(HttpMessage* message);
 void constructHttpMessage(HttpMessage* message) {
+    // Start line.
     message->message = concat(message->message, message->startLine);
 
-    for(int i = 0; i < )
-    message->message = concat(message->message, message->headers[i]);
+    // Headers.
+    char* headers = "\0";
+    for(int i = 0; i < message->headersSize; i = i + 1) {
+        headers = concat(headers, message->headers[i][0]);
+        headers = concat(headers, ":");
+        headers = concat(headers, message->headers[i][1]);
+        headers = concat(headers, "\r\n");
+    }
+
+    // CRLF terminated headers.
+    message->message = concat(message->message, headers);
+    message->message = concat(message->message, "\r\n");
+
+    // Message body.
+    message->message = concat(message->message, message->messageBody);
 }
 
 int sendMessage(HttpMessage* message);

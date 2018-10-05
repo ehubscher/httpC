@@ -193,22 +193,65 @@ static const char* HTTP_REASON_PHRASES[HTTP_REASON_PHRASES_SIZE] = {
     "HTTP Version not supported"
 };
 
-char* concat(const char* s1, const char* s2)
+char* concat(char* s1, const char* s2);
+char* concat(char* s1, const char* s2)
 {
-    char* result = "\0";
-    // +1 for the null-terminator
-    int resultSize = strlen(s1) + strlen(s2) + 1;
-    result = (char*)malloc(resultSize);
+    // Allocate enough memory for s1.
+    char* tempS1 = (char*)malloc(strlen(s1) + 1);
+    // Copy s1 character values into tempS1.
+    strcpy(tempS1, s1);
 
-    if (result == NULL) {
+    // Compute the new amount of memory needed for s1.
+    size_t newS1Size = strlen(s1) + strlen(s2) + 1;
+
+    // Free up the dynamically allocated memory for s1's previous value.
+    free(s1);
+    // Allocate s1 it's new amount of memory.
+    s1 = (char*)malloc(newS1Size);
+
+    if (s1 == NULL) {
         fprintf(stderr, "ERROR: httpClientLibrary::concat() - Failed to allocate memory for string concatenation.\n");
-        return result;
+        return s1;
     }
 
-    strcpy(result, s1);
-    strcat(result, s2);
+    // Copy s1's original value back into the larger s1.
+    strcpy(s1, tempS1);
+    // Free up tempS1 now that it's no longer needed.
+    free(tempS1);
 
-    return result;
+    // Concatenate the character values from s2 into the larger s1.
+    strcat(s1, s2);
+
+    return s1;
+}
+
+size_t getTotalHeadersStringSize(char* headers[][2], int headersSize);
+size_t getTotalHeadersStringSize(char* headers[][2], int headersSize) {
+    size_t totalHeadersStringSize = 0;
+
+    for(int i = 0; i < headersSize; i = i + 1) {
+        totalHeadersStringSize = totalHeadersStringSize + strlen(headers[i][0]) + strlen(":") + strlen(headers[i][1]) + strlen("\r\n");
+    }
+
+    return totalHeadersStringSize;
+}
+
+void constructHeadersString(char* headersString, char* headers[][2], int headersSize);
+void constructHeadersString(char* headersString, char* headers[][2], int headersSize) {
+    // Free up the memory allocated to the original headersString.
+    free(headersString);
+
+    // Compute the total size needed based off the headers array provided.
+    size_t totalHeadersStringSize = getTotalHeadersStringSize(headers, headersSize);
+    // Allocate the total size for the headers string.
+    headersString = (char*)malloc(totalHeadersStringSize + 1);
+
+    for(int i = 0; i < headersSize; i = i + 1) {
+        headersString = concat(headersString, headers[i][0]);
+        headersString = concat(headersString, ":");
+        headersString = concat(headersString, headers[i][1]);
+        headersString = concat(headersString, "\r\n");
+    }
 }
 
 #endif
