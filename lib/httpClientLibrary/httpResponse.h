@@ -1,7 +1,6 @@
 #ifndef HTTP_RESPONSE
 #define HTTP_RESPONSE
 
-#include "http.h"
 #include "httpMessage.h"
 
 typedef struct http_response HttpResponse;
@@ -23,6 +22,7 @@ struct http_response {
 
     void (*constructStatusLine)(HttpResponse*);
 
+    unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
     char* headers[][2];
 };
@@ -33,13 +33,6 @@ void constructStatusLine(HttpResponse* response) {
 
     if(strcmp(response->protocolVersion, "1.0") != 0 || strcmp(response->protocolVersion, "1.1") != 0) {
         fprintf(stderr, "EXCEPTION: httpResponse::constructStatusLine() - Invalid HTTP protocol version. Defaulting to 1.0.\n");
-        response->protocolVersion = (char*)malloc(strlen("1.0") + 1);
-
-        if(response->protocolVersion == NULL) {
-            fprintf(stderr, "MEMORY ERROR: httpResponse::constructStatusLine() - Could not allocate memory for response protocol version.");
-            exit(-1);
-        }
-
         response->protocolVersion = "1.0";
     }
 
@@ -56,13 +49,6 @@ void constructStatusLine(HttpResponse* response) {
 
     if(!isStatusCodeValid) {
         fprintf(stderr, "EXCEPTION: httpResponse::constructStatusLine() - Invalid HTTP status code. Defaulting to 500.\n");
-        response->statusCode = (char*)malloc(strlen("500") + 1);
-
-        if(response->statusCode == NULL) {
-            fprintf(stderr, "MEMORY ERROR: httpResponse::constructStatusLine() - Could not allocate memory for response status code.");
-            exit(-1);
-        }
-
         response->statusCode = "500";
     } 
 
@@ -80,12 +66,6 @@ void constructStatusLine(HttpResponse* response) {
     if(!isReasonPhraseValid) {
         fprintf(stderr, "EXCEPTION: httpResponse::constructStatusLine() - Invalid HTTP reason phrase. Defaulting to \"Internal Server Error\".\n");
         response->reasonPhrase = (char*)malloc(strlen("Internal Server Error") + 1);
-        
-        if(response->reasonPhrase == NULL) {
-            fprintf(stderr, "MEMORY ERROR: httpResponse::constructStatusLine() - Could not allocate memory for response reason phrase.");
-            exit(-1);
-        }
-        
         response->reasonPhrase = "Internal Server Error";
     } 
 
@@ -103,6 +83,17 @@ HttpMessage* constructHttpMessageFromResponse(HttpResponse* response) {
 
     response->constructStatusLine(response);
     messagePtr->startLine = response->statusLine;
+
+    // Construct message header string.
+    char* headers = NULL;
+    constructHeadersString(headers, response->headers, response->headersSize);
+    messagePtr->headers = concat(messagePtr->headers, headers);
+    messagePtr->headers = concat(messagePtr->headers, "\r\n");
+
+    // Construct mesage body.
+    messagePtr->messageBody = concat(messagePtr->messageBody, response->responseBody);
+
+    return messagePtr;
 }
 
 #endif

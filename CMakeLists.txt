@@ -6,6 +6,9 @@ project("httpC")
 enable_testing()
 
 set(SOURCES src/httpC-cli.c)
+set(URI_PARSER_DIR "./lib/uriparser-0.8.6" CACHE PATH "The path to the URIparser library.")
+
+# set_property(TARGET uriparser APPEND_STRING PROPERTY COMPILE_FLAGS " -w")
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
     set(warnings "-Wall -Wextra")
@@ -19,10 +22,13 @@ if (NOT CONFIGURED_ONCE)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(SYSTEM ${URI_PARSER_DIR}/src ${URI_PARSER_DIR}/include/uriparser)
 
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)
+
+add_subdirectory(${URI_PARSER_DIR} ${CMAKE_BINARY_DIR}/uriparser)
 
 # include header-only library
 include_directories(lib/httpClientLibrary)
