@@ -291,11 +291,11 @@ char* extractPathFromURI(char* URI) {
     }
 }
 
-char** extractQueryStringFromURI(char* URI);
-char** extractQueryStringFromURI(char* URI) {
+char* extractQueryStringFromURI(char* URI);
+char* extractQueryStringFromURI(char* URI) {
     int URISize = strlen(URI) + 1;
-    int paramSize = getParamSize();
-    char* params[paramSize][2];
+    int paramSize = 0;//getParamSize();
+    //char* params[paramSize][2];
 
     char URIcpy[URISize];
     memcpy(URIcpy, URI, URISize);
@@ -314,19 +314,19 @@ char** extractQueryStringFromURI(char* URI) {
             
             token = strtok(NULL, "&");
             
-            params[][0] = (char*)realloc(*params[0], strlen(tmpToken) + 1);
-            params[1] = (char*)realloc(*params[1], strlen(token) + 1);
+           // params[0] = (char*)realloc(*params[0], strlen(tmpToken) + 1);
+           // params[1] = (char*)realloc(*params[1], strlen(token) + 1);
 
             if(token != NULL) {
-                params[paramSize - 1][0] = concat(params[paramSize - 1][0], tmpToken);
-                params[paramSize - 1][1] = concat(params[paramSize - 1][1], token);
+                //params[paramSize - 1][0] = concat(params[paramSize - 1][0], tmpToken);
+                //params[paramSize - 1][1] = concat(params[paramSize - 1][1], token);
             }
         }
 
         free(tmpToken);
 
         
-        return params;
+        return "yo";
     }
 }
 
