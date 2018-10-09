@@ -1,7 +1,6 @@
 #ifndef HTTP_REQUEST
 #define HTTP_REQUEST
 
-#include "http.h"
 #include "httpMessage.h"
 
 typedef struct http_request HttpRequest;
@@ -17,10 +16,9 @@ struct http_request {
     // Will be replaced by entity body given a "Transfer-Encoding" header.
     char* requestBody;
 
-    char* request;
-
     void (*constructRequestLine)(HttpRequest*);
 
+    unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
     char* headers[][2];
 };
@@ -39,13 +37,6 @@ void constructRequestLine(HttpRequest* request) {
 
     if(!isMethodValid) {
         fprintf(stderr, "EXCEPTION: httpRequest::constructRequestLine() - Invalid HTTP method. Defaulting to GET.\n");
-        request->method = (char*)malloc(strlen("GET") + 1);
-
-        if(request->method == NULL) {
-            fprintf(stderr, "MEMORY ERROR: httpRequest::constructRequestLine() - Could not allocate memory for request method.");
-            exit(-1);
-        }
-
         request->method = "GET";
     } 
 
@@ -57,13 +48,6 @@ void constructRequestLine(HttpRequest* request) {
 
     if(strcmp(request->protocolVersion, "1.0") != 0 || strcmp(request->protocolVersion, "1.1") != 0) {
         fprintf(stderr, "EXCEPTION: httpRequest::constructRequestLine() - Invalid HTTP protocol version. Defaulting to 1.0.\n");
-        request->protocolVersion = (char*)malloc(strlen("1.0") + 1);
-
-        if(request->method == NULL) {
-            fprintf(stderr, "MEMORY ERROR: httpRequest::constructRequestLine() - Could not allocate memory for request protocol version.");
-            exit(-1);
-        }
-
         request->protocolVersion = "1.0";
     }
 
@@ -79,8 +63,18 @@ HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     HttpMessage* messagePtr = &message;
     messagePtr->messageType = REQUEST;
 
+    // Construct message start line.
     request->constructRequestLine(request);
     messagePtr->startLine = request->requestLine;
+
+    // Construct message header string.
+    char* headers = NULL;
+    constructHeadersString(headers, request->headers, request->headersSize);
+    messagePtr->headers = concat(messagePtr->headers, headers);
+    messagePtr->headers = concat(messagePtr->headers, "\r\n");
+
+    // Construct mesage body.
+    messagePtr->messageBody = concat(messagePtr->messageBody, request->requestBody);
 
     return messagePtr;
 }

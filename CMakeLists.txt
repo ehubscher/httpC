@@ -18,12 +18,11 @@ if (NOT CONFIGURED_ONCE)
     set(CMAKE_C_FLAGS "${warnings}" CACHE STRING "Flags used by the compiler during all build types." FORCE)
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 # include header-only library
 include_directories(lib/httpClientLibrary)
 
