@@ -27,10 +27,7 @@ void constructHttpMessage(HttpMessage* message) {
     // Start line.
     message->message = concat(message->message, message->startLine);
 
-    // Construct CRLF terminated headers.
-    char* headers = NULL;
-    constructHeadersString(headers, message->headers, message->headersSize);
-    message->message = concat(message->message, headers);
+    message->message = concat(message->message, message->headers);
     message->message = concat(message->message, "\r\n");
 
     // Message body.
