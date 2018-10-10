@@ -1,5 +1,7 @@
 #include "http.h"
+#include "httpRequest.h"
 #include "http-man.h"
+#include "httpc-helper.h"
 
 #include <unistd.h>
 #include <getopt.h>
@@ -10,10 +12,6 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
-   
-    // method - GET/POST
-    char* method;
-    int option;
 
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
@@ -36,38 +34,78 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    // method - GET/POST
+    char* method;
+    int option;
+    char* optstring;
+    HttpRequest request;
+    int dflag = 0;
+    int fflag = 0;
+    char* url = argv[argc - 1];
+    int headersSize = 0;
+    char** headers = NULL;
+    // A(&request)
+
     if (strncmp(argv[1], "get", 3) == 0) {
         method = "get";
+        optstring = "vh:";
     }
 
     else if (strncmp(argv[1], "post", 4) == 0) {
         method = "post";
+        optstring = "vh:df:";
     }
 
-    // starts evaluating options after argv[2]
-    // argv[2] is help | get | post
+    else {
+        print_usage();
+    }
+
+    request.method = method;
+    request.requestURI = url;
+
+    // starts evaluating options after argv[1]
+    // argv[1] is help | get | post
     optind = 2;
-    while ((option = getopt(argc, argv, "+vh:df:")) != -1) {
+    while ((option = getopt(argc, argv, optstring)) != -1) {
         switch (option) {
             case 'v':
                 printf("you want verbose\n");
                 break;
             case 'h':
                 printf("you want to pass headers\n");
-                // optarg - this is what the header var is called
-                // store it somewhere and add it to the msg
+                request.headersSize = request.headersSize + 1;
+                request.headers = (char**)realloc(request.headers, request.headersSize * sizeof(char*));
+                concat(request.headers[request.headersSize - 1], optarg); //atoi()
                 break;
             case 'd':
-                printf("you want inline data\n");
+                if (dflag) {
+                    help(2);
+                }
+                else {
+                    dflag++;
+                    fflag++;
+                    printf("you want inline data\n");
+                }
                 break;
             case 'f':
-                printf("you want file");
+                if (fflag) {
+                    help(2);
+                }
+                else {
+                    dflag++;
+                    fflag++;
+                    printf("you want file");
+                }
                 break;
             default:
                 printf("error");
         }
     }
     
+    //HttpRequest built_request;
+    //built_request = build_request(&request, method, url, headersSize, headers);
+
+
 
     /*
     // Parse the url to get the individual parts
