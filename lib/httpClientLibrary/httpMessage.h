@@ -38,9 +38,24 @@ void constructHttpMessage(HttpMessage* message) {
 
 int sendMessage(HttpMessage* message);
 int sendMessage(HttpMessage* message) {
-    struct addrinfo* hints;
-    struct addrinfo** results;
-    getaddrinfo(message->host, "80", hints, results);
+    int status;
+    struct addrinfo hints;
+    struct addrinfo* serverInfo;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_UNSPEC; // IPv4 | IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    hints.ai_flags = AI_PASSIVE; // Fill in IP
+    
+    if ((status = getaddrinfo(message->host, "80", &hints, &serverInfo)) != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+        exit(1);
+    }
+    
+    // serverInfo now points to a linked list of 1 or more struct addrinfos.
+    // Do everything until you don't need serverInfo anymore.
+    freeaddrinfo(serverInfo); 
 }
 
 HttpMessage* receiveMessage();
