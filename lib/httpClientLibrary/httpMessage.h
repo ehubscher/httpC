@@ -1,6 +1,10 @@
 #ifndef HTTP_MESSAGE
 #define HTTP_MESSAGE
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 #include "http.h"
 
 typedef struct http_message HttpMessage;
@@ -38,7 +42,9 @@ void constructHttpMessage(HttpMessage* message) {
 
 int sendMessage(HttpMessage* message);
 int sendMessage(HttpMessage* message) {
-
+    struct addrinfo* hints;
+    getaddrinfo(message->host, 80, hints,
+                struct addrinfo **res);
 }
 
 HttpMessage* receiveMessage();

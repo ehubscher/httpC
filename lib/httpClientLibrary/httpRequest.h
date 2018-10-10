@@ -20,7 +20,7 @@ struct http_request {
 
     unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
-    char* headers[][2];
+    char* headers[];
 };
 
 void constructRequestLine(HttpRequest* request);
