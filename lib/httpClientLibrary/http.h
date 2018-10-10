@@ -202,7 +202,15 @@ char* concat(char* s1, const char* s2);
 char* concat(char* s1, const char* s2)
 {
     // Re-allocate memory for s1 to accomodate s2.
-    s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
+    if(s1 == NULL && s2 == NULL) {
+        return "";
+    } else if(s1 == NULL) {
+        s1 = (char*)realloc(s1, strlen(s2) + 1);
+    } else if (s2 == NULL) {
+        return s1;
+    } else {
+        s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
+    }
 
     if (s1 == NULL) {
         fprintf(stderr, "ERROR: httpClientLibrary::concat() - Failed to allocate memory for string concatenation.\n");
@@ -249,14 +257,14 @@ char* extractHostFromURI(char* URI) {
     }
 }
 
-char* extractPathFromURI(char* URI);
-char* extractPathFromURI(char* URI) {
+int getSlashCountOnPathFromURI(char* URI);
+int getSlashCountOnPathFromURI(char* URI) {
+    int slashCount = 0;
     int URISize = strlen(URI) + 1;
     char URIcpy[URISize];
     memcpy(URIcpy, URI, URISize);
-
     char* result = NULL;
-    
+
     char* token = strtok(URIcpy, "/");
     if(token != NULL) {
         token = strtok(NULL, "/");
@@ -270,8 +278,6 @@ char* extractPathFromURI(char* URI) {
 
         token = strtok(NULL, "/");
         char* tmpToken = NULL;
-        int slashCount = 0;
-
         while(token != NULL) {
             tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
             strcpy(tmpToken, token);
@@ -285,77 +291,129 @@ char* extractPathFromURI(char* URI) {
             }
         }
 
-        free(tmpToken);
-
-        return result;
-    }
-}
-
-char* extractQueryStringFromURI(char* URI);
-char* extractQueryStringFromURI(char* URI) {
-    int URISize = strlen(URI) + 1;
-    int paramSize = 0;//getParamSize();
-    //char* params[paramSize][2];
-
-    char URIcpy[URISize];
-    memcpy(URIcpy, URI, URISize);
-
-    char* token = strtok(URIcpy, "?");
-
-    while(token != NULL) {
-        token = strtok(NULL, "=");
-        char* tmpToken = NULL;
-        
-        while(token != NULL) {
-            paramSize = paramSize + 1;
-            tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
-            strcpy(tmpToken, token);
-
-            
-            token = strtok(NULL, "&");
-            
-           // params[0] = (char*)realloc(*params[0], strlen(tmpToken) + 1);
-           // params[1] = (char*)realloc(*params[1], strlen(token) + 1);
-
-            if(token != NULL) {
-                //params[paramSize - 1][0] = concat(params[paramSize - 1][0], tmpToken);
-                //params[paramSize - 1][1] = concat(params[paramSize - 1][1], token);
-            }
+        tmpToken = strtok(tmpToken, "?");
+        if(tmpToken != NULL) {
+            slashCount = slashCount + 1;
         }
 
         free(tmpToken);
-
-        
-        return "yo";
     }
+
+    return slashCount;
 }
 
-size_t getTotalHeadersStringSize(const char* headers[][2], const int headersSize);
-size_t getTotalHeadersStringSize(const char* headers[][2], const int headersSize) {
+char* extractPathFromURI(char* URI);
+char* extractPathFromURI(char* URI) {
+    int slashCount = getSlashCountOnPathFromURI(URI);
+    int URISize = strlen(URI) + 1;
+    char URIcpy[URISize];
+    memcpy(URIcpy, URI, URISize);
+    char* result = NULL;
+
+    char* token = strtok(URIcpy, "/");
+    if(token != NULL) {
+        token = strtok(NULL, "/");
+    }
+
+    while(token != NULL) {
+        char* www = strstr(token, "www");
+        if(www != NULL) {
+            token = strtok(NULL, ".");
+        }
+
+        token = strtok(NULL, "/");
+        char* tmpToken = NULL;
+        while(token != NULL) {
+            tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
+            strcpy(tmpToken, token);
+
+            result = concat(result, tmpToken);
+            token = strtok(NULL, "/");
+
+            if(token != NULL) {
+                result = concat(result, "/");
+            }
+        }
+
+        tmpToken = strtok(tmpToken, "?");
+        if(tmpToken != NULL) {
+            result = strtok(result, "?");
+        }
+
+        free(tmpToken);
+    }
+
+    return result;
+}
+
+int getQueryStringParamSize(char* URI);
+int getQueryStringParamSize(char* URI) {
+    int URISize = strlen(URI) + 1;
+    char URIcpy[URISize];
+    memcpy(URIcpy, URI, URISize);
+
+    int paramSize = 0;
+
+    char* token = strtok(URIcpy, "?");
+    char* tmpToken = NULL;
+    while(token != NULL) {
+        token = strtok(NULL, "&");
+        
+        if(token != NULL) {
+            paramSize = paramSize + 1;
+        }
+    }
+    
+    free(tmpToken);
+    return paramSize;
+}
+
+char** extractQueryStringFromURI(char* URI);
+char** extractQueryStringFromURI(char* URI) {
+    int URISize = strlen(URI) + 1;
+    char URIcpy[URISize];
+    memcpy(URIcpy, URI, URISize);
+
+    int paramSize = getQueryStringParamSize(URI);
+    char** params = (char**)malloc(sizeof(char**));
+    *params = (char*)malloc(paramSize * sizeof(char*));
+
+    char* token = strtok(URIcpy, "?");
+    char* tmpToken = NULL;
+    for(int i = 0; i < paramSize && token != NULL; i = i + 1) {
+        token = strtok(NULL, "&");
+        
+        if(token != NULL) {
+            tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
+            strcpy(tmpToken, token);
+            memcpy(params[i], tmpToken, strlen(tmpToken));
+        }
+    }
+
+    free(tmpToken);
+    return params;
+}
+
+size_t getTotalHeadersStringSize(const char* headers[], const int headersSize);
+size_t getTotalHeadersStringSize(const char* headers[], const int headersSize) {
     size_t totalHeadersStringSize = 0;
 
     for(int i = 0; i < headersSize; i = i + 1) {
-        totalHeadersStringSize = totalHeadersStringSize + strlen(headers[i][0]) + strlen(":") + strlen(headers[i][1]) + strlen("\r\n");
+        totalHeadersStringSize = totalHeadersStringSize + strlen(headers[i]) + strlen("\r\n");
     }
 
     return totalHeadersStringSize;
 }
 
-void constructHeadersString(char* headersString, const char* headers[][2], const int headersSize);
-void constructHeadersString(char* headersString, const char* headers[][2], const int headersSize) {
-    // Free up the memory allocated to the original headersString.
-    free(headersString);
-
+void constructHeadersString(char* headersString, const char* headers[], const int headersSize);
+void constructHeadersString(char* headersString, const char* headers[], const int headersSize) {
     // Compute the total size needed based off the headers array provided.
     size_t totalHeadersStringSize = getTotalHeadersStringSize(headers, headersSize);
     // Allocate the total size for the headers string.
-    headersString = (char*)malloc(totalHeadersStringSize + 1);
+    headersString = (char*)realloc(headersString, totalHeadersStringSize + 1);
 
     for(int i = 0; i < headersSize; i = i + 1) {
-        headersString = concat(headersString, headers[i][0]);
-        headersString = concat(headersString, ":");
-        headersString = concat(headersString, headers[i][1]);
-        headersString = concat(headersString, "\r\n");
+        headersString = concat(headersString, headers[i]);
     }
 }
 
