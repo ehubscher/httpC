@@ -22,7 +22,7 @@ struct http_message {
     HttpMessage* (*receiveMessage)();
 
     unsigned int headersSize;
-    char* headers[][2];
+    char* headers[];
 };
 
 void constructHttpMessage(HttpMessage* message);
@@ -43,8 +43,8 @@ void constructHttpMessage(HttpMessage* message) {
 int sendMessage(HttpMessage* message);
 int sendMessage(HttpMessage* message) {
     struct addrinfo* hints;
-    getaddrinfo(message->host, 80, hints,
-                struct addrinfo **res);
+    struct addrinfo** results;
+    // getaddrinfo(message->host, 80, hints, results);
 }
 
 HttpMessage* receiveMessage();
