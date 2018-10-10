@@ -10,6 +10,7 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
+    char* test = extractHostFromURI("http://www.google.com/controller/action");
    
     // method - GET/POST
     char* method;

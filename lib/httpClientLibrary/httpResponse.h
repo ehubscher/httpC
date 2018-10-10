@@ -24,7 +24,7 @@ struct http_response {
 
     unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
-    char* headers[];
+    char** headers;
 };
 
 void constructStatusLine(HttpResponse* response);
@@ -36,6 +36,7 @@ void constructStatusLine(HttpResponse* response) {
         response->protocolVersion = "1.0";
     }
 
+    response->statusLine = concat(response->statusLine, "HTTP/");
     response->statusLine = concat(response->statusLine, response->protocolVersion);
     response->statusLine = concat(response->statusLine, " ");
 
@@ -85,9 +86,7 @@ HttpMessage* constructHttpMessageFromResponse(HttpResponse* response) {
     messagePtr->startLine = response->statusLine;
 
     // Construct message header string.
-    char* headers = NULL;
-    constructHeadersString(headers, response->headers, response->headersSize);
-    messagePtr->headers = concat(messagePtr->headers, headers);
+    messagePtr->headers = constructHeadersString(response->headers, response->headersSize);
     messagePtr->headers = concat(messagePtr->headers, "\r\n");
 
     // Construct mesage body.

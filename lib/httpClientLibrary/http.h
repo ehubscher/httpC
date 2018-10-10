@@ -242,18 +242,19 @@ char* extractHostFromURI(char* URI) {
     int URISize = strlen(URI) + 1;
     char URIcpy[URISize];
     memcpy(URIcpy, URI, URISize);
+    char* result;
 
-    char* token = strtok(URIcpy, "/");
+    char* token = strtok(URIcpy, "www");
     if(token != NULL) {
         token = strtok(NULL, "/");
         
         if(token != NULL) {
-            return token;
+            return concat(result, token);
         } else {
-            return "\0";
+            return NULL;
         }
     } else {
-        return "\0";
+        return NULL;
     }
 }
 
@@ -405,16 +406,16 @@ size_t getTotalHeadersStringSize(const char* headers[], const int headersSize) {
     return totalHeadersStringSize;
 }
 
-void constructHeadersString(char* headersString, const char* headers[], const int headersSize);
-void constructHeadersString(char* headersString, const char* headers[], const int headersSize) {
-    // Compute the total size needed based off the headers array provided.
-    size_t totalHeadersStringSize = getTotalHeadersStringSize(headers, headersSize);
+char* constructHeadersString(const char* headers[], const int headersSize);
+char* constructHeadersString(const char* headers[], const int headersSize) {
     // Allocate the total size for the headers string.
-    headersString = (char*)realloc(headersString, totalHeadersStringSize + 1);
+    char* headersString = NULL;
 
     for(int i = 0; i < headersSize; i = i + 1) {
         headersString = concat(headersString, headers[i]);
     }
+
+    return headersString;
 }
 
 #endif
