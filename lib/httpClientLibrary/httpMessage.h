@@ -10,6 +10,8 @@
 typedef struct http_message HttpMessage;
 struct http_message {
     HTTP_MESSAGE_TYPES messageType;
+    char* host;
+    int port;
 
     char* startLine;
     char* headers;
@@ -38,7 +40,7 @@ int sendMessage(HttpMessage* message);
 int sendMessage(HttpMessage* message) {
     struct addrinfo* hints;
     struct addrinfo** results;
-    // getaddrinfo(message->host, 80, hints, results);
+    getaddrinfo(message->host, "80", hints, results);
 }
 
 HttpMessage* receiveMessage();

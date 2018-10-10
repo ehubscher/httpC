@@ -34,17 +34,14 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // method - GET/POST
     char* method;
     int option;
     char* optstring;
     HttpRequest request;
     int dflag = 0;
     int fflag = 0;
+    int vflag = 0;
     char* url = argv[argc - 1];
-    int headersSize = 0;
-    char** headers = NULL;
-    // A(&request)
 
     if (strncmp(argv[1], "get", 3) == 0) {
         method = "get";
@@ -70,6 +67,7 @@ int main(int argc, char *argv[]) {
         switch (option) {
             case 'v':
                 printf("you want verbose\n");
+                vflag = 1;
                 break;
             case 'h':
                 printf("you want to pass headers\n");
@@ -101,11 +99,9 @@ int main(int argc, char *argv[]) {
                 printf("error");
         }
     }
-    
-    //HttpRequest built_request;
-    //built_request = build_request(&request, method, url, headersSize, headers);
 
-
+    HttpMessage* message;
+    message = constructHttpMessageFromRequest(&request);
 
     /*
     // Parse the url to get the individual parts

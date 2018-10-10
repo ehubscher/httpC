@@ -20,7 +20,7 @@ struct http_request {
 
     unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
-    char* headers[];
+    char** headers;
 };
 
 void constructRequestLine(HttpRequest* request);
@@ -51,6 +51,7 @@ void constructRequestLine(HttpRequest* request) {
         request->protocolVersion = "1.0";
     }
 
+    request->requestLine = concat(request->requestLine, "HTTP/");
     request->requestLine = concat(request->requestLine, request->protocolVersion);
     request->requestLine = concat(request->requestLine, " ");
 
@@ -60,23 +61,23 @@ void constructRequestLine(HttpRequest* request) {
 HttpMessage* constructHttpMessageFromRequest(HttpRequest* request);
 HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     HttpMessage message;
-    HttpMessage* messagePtr = &message;
-    messagePtr->messageType = REQUEST;
+
+    message.messageType = REQUEST;
+    message.host = request->requestURI;
+    message.port = 80;
 
     // Construct message start line.
     request->constructRequestLine(request);
-    messagePtr->startLine = request->requestLine;
+    message.startLine = request->requestLine;
 
     // Construct message header string.
-    char* headers = NULL;
-    constructHeadersString(headers, request->headers, request->headersSize);
-    messagePtr->headers = concat(messagePtr->headers, headers);
-    messagePtr->headers = concat(messagePtr->headers, "\r\n");
+    message.headers = constructHeadersString(request->headers, request->headersSize);
+    message.headers = concat(message.headers, "\r\n");
 
     // Construct mesage body.
-    messagePtr->messageBody = concat(messagePtr->messageBody, request->requestBody);
+    message.messageBody = concat(message.messageBody, request->requestBody);
 
-    return messagePtr;
+    return &message;
 }
 
 #endif
