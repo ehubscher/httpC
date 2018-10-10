@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
     int fflag = 0;
     int vflag = 0;
     char* url = argv[argc - 1];
+    FILE *file;
 
     if (strncmp(argv[1], "get", 3) == 0) {
         method = "get";
@@ -66,11 +67,9 @@ int main(int argc, char *argv[]) {
     while ((option = getopt(argc, argv, optstring)) != -1) {
         switch (option) {
             case 'v':
-                printf("you want verbose\n");
                 vflag = 1;
                 break;
             case 'h':
-                printf("you want to pass headers\n");
                 request.headersSize = request.headersSize + 1;
                 request.headers = (char**)realloc(request.headers, request.headersSize * sizeof(char*));
                 concat(request.headers[request.headersSize - 1], optarg); //atoi()
@@ -93,6 +92,7 @@ int main(int argc, char *argv[]) {
                     dflag++;
                     fflag++;
                     printf("you want file");
+                    request.requestBody = readFile(optarg);
                 }
                 break;
             default:
@@ -102,6 +102,8 @@ int main(int argc, char *argv[]) {
 
     HttpMessage* message;
     message = constructHttpMessageFromRequest(&request);
+
+    sendMessage(message);
 
     /*
     // Parse the url to get the individual parts
@@ -125,5 +127,6 @@ int main(int argc, char *argv[]) {
     // return the response
     return_response();
 */
+    free(request.requestBody);
     return 0;
 }
