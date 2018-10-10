@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
     int fflag = 0;
     int vflag = 0;
     char* url = argv[argc - 1];
-    FILE *file;
 
     if (strncmp(argv[1], "get", 3) == 0) {
         method = "get";
@@ -51,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     else if (strncmp(argv[1], "post", 4) == 0) {
         method = "post";
-        optstring = "vh:df:";
+        optstring = "vh:d:f:";
     }
 
     else {
@@ -81,7 +80,8 @@ int main(int argc, char *argv[]) {
                 else {
                     dflag++;
                     fflag++;
-                    printf("you want inline data\n");
+                    request.requestBody = optarg;
+                    printf("Inline data has been associated to the request body: %s", request.requestBody);
                 }
                 break;
             case 'f':
@@ -91,8 +91,18 @@ int main(int argc, char *argv[]) {
                 else {
                     dflag++;
                     fflag++;
-                    printf("you want file");
-                    request.requestBody = readFile(optarg);
+                    
+                    char* string = readFile(optarg);
+                    int size = readFileSize(optarg);
+                    
+                    char tmpString[size];
+                    memcpy(tmpString, string, size);
+                    free(string);
+
+                    request.requestBody = tmpString;
+                    if (request.requestBody) {
+                        printf("File data stored in request body: %s", request.requestBody);
+                    }
                 }
                 break;
             default:

@@ -102,6 +102,7 @@ HttpRequest build_request(HttpRequest request, char* method, char* url, int head
 }
 */
 
+// do i need to put char* readFile();
 char* readFile(char *filename)
 {
    char *buffer = NULL;
@@ -140,6 +141,29 @@ char* readFile(char *filename)
     }
 
     return buffer;
+}
+
+int readFileSize(char *filename);
+int readFileSize(char *filename) {
+    int string_size, buffer_size;
+    FILE *handler = fopen(filename, "r");
+
+    if (handler)
+    {
+       // Seek the last byte of the file
+       fseek(handler, 0, SEEK_END);
+       // Offset from the first to the last byte, or in other words, filesize
+       string_size = ftell(handler);
+       // go back to the start of the file
+       rewind(handler);
+
+        // get the size of the buffer
+       buffer_size = sizeof(char) * (string_size + 1);
+
+       // Always remember to close the file.
+       fclose(handler);
+    }
+    return buffer_size;
 }
 
 #endif
