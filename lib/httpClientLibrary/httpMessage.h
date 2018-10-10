@@ -20,9 +20,6 @@ struct http_message {
     void (*constructHttpMessage)(HttpMessage*);
     int (*sendMessage)(HttpMessage*);
     HttpMessage* (*receiveMessage)();
-
-    unsigned int headersSize;
-    char* headers[];
 };
 
 void constructHttpMessage(HttpMessage* message);
