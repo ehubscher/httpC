@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "http.h"
 
@@ -14,15 +16,15 @@ struct http_message {
     int port;
     int socketFileDescriptor;
 
+    void (*constructHttpMessage)(HttpMessage*);
+    int (*sendMessage)(HttpMessage*);
+    HttpMessage* (*receiveMessage)();
+
     char* startLine;
     char* headers;
     char* messageBody;
 
     char* message;
-
-    void (*constructHttpMessage)(HttpMessage*);
-    int (*sendMessage)(HttpMessage*);
-    HttpMessage* (*receiveMessage)();
 };
 
 void constructHttpMessage(HttpMessage* message);
@@ -39,6 +41,7 @@ void constructHttpMessage(HttpMessage* message) {
 
 struct addrinfo* getHostInfo(HttpMessage* message);
 struct addrinfo* getHostInfo(HttpMessage* message) {
+    char ipstr[INET6_ADDRSTRLEN];
     int status;
     struct addrinfo hints, *serverInfoResults, *resultsPtr; 
 
@@ -49,7 +52,6 @@ struct addrinfo* getHostInfo(HttpMessage* message) {
 
     hints.ai_family = AF_UNSPEC; // IPv4 | IPv6
     hints.ai_socktype = SOCK_STREAM; // TCP
-    hints.ai_flags = AI_PASSIVE; // Fill in IP
 
     if ((status = getaddrinfo(message->host, "http", &hints, &serverInfoResults)) != 0) {
         fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
@@ -71,6 +73,10 @@ struct addrinfo* getHostInfo(HttpMessage* message) {
             address = &(ipv6->sin6_addr);
             IPVersion = "IPv6";
         }
+
+        // convert the IP to a string and print it:
+        inet_ntop(resultsPtr->ai_family, address, ipstr, sizeof ipstr);
+        printf("  %s: %s\n", IPVersion, ipstr);
 
         resultsPtr = resultsPtr->ai_next;
     }

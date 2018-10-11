@@ -66,6 +66,9 @@ HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     HttpMessage message;
     HttpMessage* messagePtr = &message;
 
+    message.messageBody = NULL;
+    message.message = NULL;
+
     message.messageType = REQUEST;
     message.host = request->requestURI;
     message.port = 80;

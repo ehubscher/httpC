@@ -59,7 +59,14 @@ int main(int argc, char *argv[]) {
     }
 
     request.method = method;
-    request.requestURI = url;
+
+    char* newUrl = NULL;
+    if(strcmp(extractProtocolFromURI(url), "http") == 0) {
+        newUrl = (char*)malloc(strlen(url) - 6);
+        memcpy(newUrl, url + 7, strlen(url) - 6);
+    }
+    
+    request.requestURI = newUrl;
     request.protocolVersion = "1.0";
     request.headers = NULL;
     request.headersSize = 0;
@@ -121,9 +128,10 @@ int main(int argc, char *argv[]) {
     }
 
     message = constructHttpMessageFromRequest(requestPtr);
+    constructHttpMessage(message);
 
     sendMessage(message);
-
+    receiveMessage(message, 100);
     /*
     // Parse the url to get the individual parts
     parse_url();

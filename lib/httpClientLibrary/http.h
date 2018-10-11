@@ -215,7 +215,7 @@ char* concat(char* s1, const char* s2)
 {
     // Re-allocate memory for s1 to accomodate s2.
     if(s1 == NULL && s2 == NULL) {
-        return "";
+        return NULL;
     } else if(s1 == NULL) {
         s1 = (char*)realloc(s1, strlen(s2) + 1);
     } else if (s2 == NULL) {
@@ -226,13 +226,25 @@ char* concat(char* s1, const char* s2)
 
     if (s1 == NULL) {
         fprintf(stderr, "ERROR: httpClientLibrary::concat() - Failed to allocate memory for string concatenation.\n");
-        return "\0";
+        return NULL;
     }
 
     // Copy the character values from s2 into the remaining memory slots of result.
     memcpy(s1 + strlen(s1), s2, strlen(s2) + 1);
 
     return s1;
+}
+
+char* removeProtocolFromURI(char* URI);
+char* removeProtocolFromURI(char* URI) {
+    int URISize = strlen(URI) + 1;
+    char URIcpy[URISize];
+    memcpy(URIcpy, URI, URISize);
+
+    char* token = strtok(URIcpy, "/");
+    if(token != NULL) {
+        token = strtok(NULL, "/");
+    }
 }
 
 char* extractProtocolFromURI(char* URI);
@@ -425,10 +437,6 @@ char* constructHeadersString(char** headers, const int headersSize) {
 
     for(int i = 0; i < headersSize; i = i + 1) {
         headersString = concat(headersString, headers[i]);
-    }
-
-    if(headersString == NULL) {
-        return concat(NULL, "\r\n");
     }
 
     return headersString;
