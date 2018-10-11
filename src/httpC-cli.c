@@ -11,63 +11,51 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
-    char* http_message = NULL;
-    char* request_line = NULL;
-    char* headers = NULL;
-    char* message_body = NULL;
-    
+    char* url = argv[argc - 1];
+    char* newUrl = NULL;
     char method[8];
+    int sockfd;
+
     int option;
     char* optstring;
     int dflag = 0;
     int fflag = 0;
     int vflag = 0;
-    char* url = argv[argc - 1];
-    int sockfd;
-    
-    char* newUrl = NULL;
+
+    char* http_message = NULL;
+    char* request_line = NULL;
+    char* headers = NULL;
+    char* message_body = NULL;
 
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
-        if (argc < 3)
-        {
+        if (argc < 3) {
             help(0);
-        }
-        else if (strncmp(argv[2], "get", 3) == 0)
-        {
+        } else if (strncmp(argv[2], "get", 3) == 0) {
             help(1);
-        }
-        else if (strncmp(argv[2], "post", 4) == 0)
-        {
+        } else if (strncmp(argv[2], "post", 4) == 0) {
             help(2);
-        }
-        else
-        {
+        } else {
             help(0);
         }
+
         return 0;
     }
-    
+
     if(strcmp(extractProtocolFromURI(url), "http") == 0) {
         newUrl = (char*)malloc(strlen(url) - 6);
         memcpy(newUrl, url + 7, strlen(url) - 6);
-    } 
-    
-    else {
+    } else {
         newUrl = url;
     }
     
     if (strncmp(argv[1], "get", 3) == 0) {
         memcpy(method, "GET", 4);
         optstring = "vh:";
-    }
-
-    else if (strncmp(argv[1], "post", 4) == 0) {
+    } else if (strncmp(argv[1], "post", 4) == 0) {
         memcpy(method, "POST", 5);
         optstring = "vh:d:f:";
-    }
-
-    else {
+    } else {
         print_usage();
     }
 
@@ -86,7 +74,7 @@ int main(int argc, char *argv[]) {
                 vflag = 1;
                 break;
 
-            case 'h':                
+            case 'h':
                 headers = concat(headers, optarg);
                 headers = concat(headers, "\r\n");
                 break;
@@ -95,26 +83,26 @@ int main(int argc, char *argv[]) {
                 if (dflag) {
                     printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
-                }
-                else {
+                } else {
                     dflag++;
                     fflag++;
 
                     if (message_body != NULL) {
                         message_body = concat(message_body, "&");
                     }
-                    message_body = concat(message_body, optarg);
                     
+                    message_body = concat(message_body, optarg);
+
                     printf("Inline data has been associated to the request body: %s\n", message_body);
                 }
+
                 break;
 
             case 'f':
                 if (fflag) {
                     printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
-                }
-                else {
+                } else {
                     dflag++;
                     fflag++;
 
@@ -131,6 +119,7 @@ int main(int argc, char *argv[]) {
                         printf("File data stored in request body: %s\n", message_body);
                     }
                 }
+                
                 break;
 
             default:
