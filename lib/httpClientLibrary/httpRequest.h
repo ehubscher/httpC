@@ -25,7 +25,7 @@ struct http_request {
 
 void constructRequestLine(HttpRequest* request);
 void constructRequestLine(HttpRequest* request) {
-    request->requestLine = '\0';
+    request->requestLine = NULL;
 
     int isMethodValid = 0;
     for(int i = 0; i < HTTP_METHODS_SIZE; i = i + 1) {
@@ -61,6 +61,7 @@ void constructRequestLine(HttpRequest* request) {
 HttpMessage* constructHttpMessageFromRequest(HttpRequest* request);
 HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     HttpMessage message;
+    HttpMessage* messagePtr = &message;
 
     message.messageType = REQUEST;
     message.host = request->requestURI;
@@ -77,7 +78,7 @@ HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     // Construct mesage body.
     message.messageBody = concat(message.messageBody, request->requestBody);
 
-    return &message;
+    return messagePtr;
 }
 
 #endif

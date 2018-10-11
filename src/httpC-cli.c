@@ -12,6 +12,60 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
+    int status;
+    struct addrinfo hints;
+    struct addrinfo* serverInfoResults;
+    struct addrinfo* resultsPtr; 
+    
+    void *address;
+    char *IPVersion;
+    int socketFileDescriptor;
+
+    int connectResult;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_UNSPEC; // IPv4 | IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP
+    
+    if ((status = getaddrinfo("google.com", "http", &hints, &serverInfoResults)) != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+        exit(1);
+    }
+
+    // serverInfoResults now points to a linked list of 1 or more struct addrinfo s.
+    // Do everything until you don't need serverInfo anymore.
+    resultsPtr = serverInfoResults;
+    while(resultsPtr != NULL) {
+        // get the pointer to the address itself,
+        // different fields in IPv4 and IPv6:
+        if (resultsPtr->ai_family == AF_INET) { // IPv4
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)resultsPtr->ai_addr;
+            address = &(ipv4->sin_addr);
+            IPVersion = "IPv4";
+        } else { // IPv6
+            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)resultsPtr->ai_addr;
+            address = &(ipv6->sin6_addr);
+            IPVersion = "IPv6";
+        }
+
+        resultsPtr = resultsPtr->ai_next;
+    }
+    
+    socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+    socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+
+    connectResult = connect(socketFileDescriptor, serverInfoResults->ai_addr, serverInfoResults->ai_addrlen);
+    
+    // serverInfoResults now points to a linked list of 1 or more struct addrinfos.
+    // Do everything until you don't need serverInfoResults anymore.
+    freeaddrinfo(serverInfoResults);
+    
+
+// -----------------------------------------------------------------------------
 
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {

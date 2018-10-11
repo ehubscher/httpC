@@ -395,8 +395,8 @@ char** extractQueryStringFromURI(char* URI) {
     return params;
 }
 
-size_t getTotalHeadersStringSize(const char* headers[], const int headersSize);
-size_t getTotalHeadersStringSize(const char* headers[], const int headersSize) {
+size_t getTotalHeadersStringSize(char** headers, const int headersSize);
+size_t getTotalHeadersStringSize(char** headers, const int headersSize) {
     size_t totalHeadersStringSize = 0;
 
     for(int i = 0; i < headersSize; i = i + 1) {
@@ -406,8 +406,8 @@ size_t getTotalHeadersStringSize(const char* headers[], const int headersSize) {
     return totalHeadersStringSize;
 }
 
-char* constructHeadersString(const char* headers[], const int headersSize);
-char* constructHeadersString(const char* headers[], const int headersSize) {
+char* constructHeadersString(char** headers, const int headersSize);
+char* constructHeadersString(char** headers, const int headersSize) {
     // Allocate the total size for the headers string.
     char* headersString = NULL;
 

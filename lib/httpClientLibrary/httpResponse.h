@@ -29,7 +29,7 @@ struct http_response {
 
 void constructStatusLine(HttpResponse* response);
 void constructStatusLine(HttpResponse* response) {
-    response->statusLine = '\0';
+    response->statusLine = NULL;
 
     if(strcmp(response->protocolVersion, "1.0") != 0 || strcmp(response->protocolVersion, "1.1") != 0) {
         fprintf(stderr, "EXCEPTION: httpResponse::constructStatusLine() - Invalid HTTP protocol version. Defaulting to 1.0.\n");
