@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <unistd.h> /* read, write, close */
 #include <sys/socket.h> /* socket, connect */
@@ -197,6 +198,17 @@ static const char* HTTP_REASON_PHRASES[HTTP_REASON_PHRASES_SIZE] = {
     "Gateway Time-out",
     "HTTP Version not supported"
 };
+
+char* capitalize(char* string, int size);
+char* capitalize(char* string, int size) {
+    char* capitalizedString = (char*)malloc(size * sizeof(char) + 1);
+    for(int i = 0; i < size; i = i + 1) {
+        char charAti[1] = {toupper(string[i])};
+        memcpy(capitalizedString + i, charAti, 1);
+    }
+
+    return capitalizedString;
+}
 
 char* concat(char* s1, const char* s2);
 char* concat(char* s1, const char* s2)
@@ -413,6 +425,10 @@ char* constructHeadersString(char** headers, const int headersSize) {
 
     for(int i = 0; i < headersSize; i = i + 1) {
         headersString = concat(headersString, headers[i]);
+    }
+
+    if(headersString == NULL) {
+        return concat(NULL, "\r\n");
     }
 
     return headersString;

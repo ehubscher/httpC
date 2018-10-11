@@ -17,6 +17,7 @@ struct http_request {
     char* requestBody;
 
     void (*constructRequestLine)(HttpRequest*);
+    HttpMessage* (*constructHttpMessageFromRequest)(HttpRequest*);
 
     unsigned int headersSize;
     // i.e. `field-name:field-value`. "field-name"s should be case-insensitive
@@ -26,10 +27,12 @@ struct http_request {
 void constructRequestLine(HttpRequest* request);
 void constructRequestLine(HttpRequest* request) {
     request->requestLine = NULL;
+    int capitalMethodSize = strlen(request->method) + 1;
+    char* capitalMethod = capitalize(request->method, capitalMethodSize);
 
     int isMethodValid = 0;
     for(int i = 0; i < HTTP_METHODS_SIZE; i = i + 1) {
-        if(strcmp(request->method, HTTP_METHODS[i]) == 0) {
+        if(strcmp(capitalMethod, HTTP_METHODS[i]) == 0) {
             isMethodValid = 1;
             break;
         }
@@ -37,16 +40,16 @@ void constructRequestLine(HttpRequest* request) {
 
     if(!isMethodValid) {
         fprintf(stderr, "EXCEPTION: httpRequest::constructRequestLine() - Invalid HTTP method. Defaulting to GET.\n");
-        request->method = "GET";
+        exit(1);
     } 
 
-    request->requestLine = concat(request->requestLine, request->method);
+    request->requestLine = concat(request->requestLine, capitalMethod);
     request->requestLine = concat(request->requestLine, " ");
 
     request->requestLine = concat(request->requestLine, request->requestURI);
     request->requestLine = concat(request->requestLine, " ");
 
-    if(strcmp(request->protocolVersion, "1.0") != 0 || strcmp(request->protocolVersion, "1.1") != 0) {
+    if(strcmp(request->protocolVersion, "1.0") != 0 && strcmp(request->protocolVersion, "1.1") != 0) {
         fprintf(stderr, "EXCEPTION: httpRequest::constructRequestLine() - Invalid HTTP protocol version. Defaulting to 1.0.\n");
         request->protocolVersion = "1.0";
     }
@@ -68,7 +71,7 @@ HttpMessage* constructHttpMessageFromRequest(HttpRequest* request) {
     message.port = 80;
 
     // Construct message start line.
-    request->constructRequestLine(request);
+    constructRequestLine(request);
     message.startLine = request->requestLine;
 
     // Construct message header string.

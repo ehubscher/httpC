@@ -12,61 +12,6 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
-    int status;
-    struct addrinfo hints;
-    struct addrinfo* serverInfoResults;
-    struct addrinfo* resultsPtr; 
-    
-    void *address;
-    char *IPVersion;
-    int socketFileDescriptor;
-
-    int connectResult;
-
-    memset(&hints, 0, sizeof(hints));
-
-    hints.ai_family = AF_UNSPEC; // IPv4 | IPv6
-    hints.ai_socktype = SOCK_STREAM; // TCP
-    
-    if ((status = getaddrinfo("google.com", "http", &hints, &serverInfoResults)) != 0) {
-        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
-        exit(1);
-    }
-
-    // serverInfoResults now points to a linked list of 1 or more struct addrinfo s.
-    // Do everything until you don't need serverInfo anymore.
-    resultsPtr = serverInfoResults;
-    while(resultsPtr != NULL) {
-        // get the pointer to the address itself,
-        // different fields in IPv4 and IPv6:
-        if (resultsPtr->ai_family == AF_INET) { // IPv4
-            struct sockaddr_in *ipv4 = (struct sockaddr_in *)resultsPtr->ai_addr;
-            address = &(ipv4->sin_addr);
-            IPVersion = "IPv4";
-        } else { // IPv6
-            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)resultsPtr->ai_addr;
-            address = &(ipv6->sin6_addr);
-            IPVersion = "IPv6";
-        }
-
-        resultsPtr = resultsPtr->ai_next;
-    }
-    
-    socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
-    socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
-socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
-socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
-socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
-
-    connectResult = connect(socketFileDescriptor, serverInfoResults->ai_addr, serverInfoResults->ai_addrlen);
-    
-    // serverInfoResults now points to a linked list of 1 or more struct addrinfos.
-    // Do everything until you don't need serverInfoResults anymore.
-    freeaddrinfo(serverInfoResults);
-    
-
-// -----------------------------------------------------------------------------
-
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
         if (argc < 3)
@@ -92,18 +37,20 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
     int option;
     char* optstring;
     HttpRequest request;
+    HttpRequest* requestPtr = &request;
+    HttpMessage* message;
     int dflag = 0;
     int fflag = 0;
     int vflag = 0;
     char* url = argv[argc - 1];
 
     if (strncmp(argv[1], "get", 3) == 0) {
-        method = "get";
+        method = "GET";
         optstring = "vh:";
     }
 
     else if (strncmp(argv[1], "post", 4) == 0) {
-        method = "post";
+        method = "POST";
         optstring = "vh:d:f:";
     }
 
@@ -113,6 +60,9 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
 
     request.method = method;
     request.requestURI = url;
+    request.protocolVersion = "1.0";
+    request.headers = NULL;
+    request.headersSize = 0;
 
     // starts evaluating options after argv[1]
     // argv[1] is help | get | post
@@ -170,8 +120,7 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
         }
     }
 
-    HttpMessage* message;
-    message = constructHttpMessageFromRequest(&request);
+    message = constructHttpMessageFromRequest(requestPtr);
 
     sendMessage(message);
 
