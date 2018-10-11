@@ -1,6 +1,7 @@
 #ifndef HTTPC_HELPER
 #define HTTPC_HELPER
 #define CHUNK_SIZE 1024
+
 #include <httpRequest.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -102,7 +103,7 @@ HttpRequest build_request(HttpRequest request, char* method, char* url, int head
 }
 */
 
-// do i need to put char* readFile();
+char* readFile(char *filename);
 char* readFile(char *filename)
 {
    char *buffer = NULL;

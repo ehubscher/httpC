@@ -68,30 +68,35 @@ int main(int argc, char *argv[]) {
             case 'v':
                 vflag = 1;
                 break;
+
             case 'h':
                 request.headersSize = request.headersSize + 1;
                 request.headers = (char**)realloc(request.headers, request.headersSize * sizeof(char*));
                 concat(request.headers[request.headersSize - 1], optarg); //atoi()
                 break;
+
             case 'd':
                 if (dflag) {
+                    printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 }
                 else {
                     dflag++;
                     fflag++;
                     request.requestBody = optarg;
-                    printf("Inline data has been associated to the request body: %s", request.requestBody);
+                    printf("Inline data has been associated to the request body: %s\n", request.requestBody);
                 }
                 break;
+
             case 'f':
                 if (fflag) {
+                    printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 }
                 else {
                     dflag++;
                     fflag++;
-                    
+
                     char* string = readFile(optarg);
                     int size = readFileSize(optarg);
                     
@@ -101,10 +106,11 @@ int main(int argc, char *argv[]) {
 
                     request.requestBody = tmpString;
                     if (request.requestBody) {
-                        printf("File data stored in request body: %s", request.requestBody);
+                        printf("File data stored in request body: %s\n", request.requestBody);
                     }
                 }
                 break;
+
             default:
                 printf("error");
         }
@@ -137,6 +143,5 @@ int main(int argc, char *argv[]) {
     // return the response
     return_response();
 */
-    free(request.requestBody);
     return 0;
 }
