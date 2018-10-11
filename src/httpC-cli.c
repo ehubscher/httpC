@@ -104,7 +104,7 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
 
     else if (strncmp(argv[1], "post", 4) == 0) {
         method = "post";
-        optstring = "vh:df:";
+        optstring = "vh:d:f:";
     }
 
     else {
@@ -120,35 +120,51 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
     while ((option = getopt(argc, argv, optstring)) != -1) {
         switch (option) {
             case 'v':
-                printf("you want verbose\n");
                 vflag = 1;
                 break;
+
             case 'h':
-                printf("you want to pass headers\n");
                 request.headersSize = request.headersSize + 1;
                 request.headers = (char**)realloc(request.headers, request.headersSize * sizeof(char*));
                 concat(request.headers[request.headersSize - 1], optarg); //atoi()
                 break;
+
             case 'd':
                 if (dflag) {
+                    printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 }
                 else {
                     dflag++;
                     fflag++;
-                    printf("you want inline data\n");
+                    request.requestBody = optarg;
+                    printf("Inline data has been associated to the request body: %s\n", request.requestBody);
                 }
                 break;
+
             case 'f':
                 if (fflag) {
+                    printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 }
                 else {
                     dflag++;
                     fflag++;
-                    printf("you want file");
+
+                    char* string = readFile(optarg);
+                    int size = readFileSize(optarg);
+                    
+                    char tmpString[size];
+                    memcpy(tmpString, string, size);
+                    free(string);
+
+                    request.requestBody = tmpString;
+                    if (request.requestBody) {
+                        printf("File data stored in request body: %s\n", request.requestBody);
+                    }
                 }
                 break;
+
             default:
                 printf("error");
         }
@@ -156,6 +172,8 @@ socketFileDescriptor = socket(serverInfoResults->ai_family, serverInfoResults->a
 
     HttpMessage* message;
     message = constructHttpMessageFromRequest(&request);
+
+    sendMessage(message);
 
     /*
     // Parse the url to get the individual parts
