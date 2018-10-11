@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     }
 
     request.method = method;
+    request.requestBody = NULL;
     request.requestURI = url;
     request.protocolVersion = "1.0";
     request.headers = NULL;
@@ -123,6 +124,7 @@ int main(int argc, char *argv[]) {
     message = constructHttpMessageFromRequest(requestPtr);
 
     sendMessage(message);
+    receiveMessage(message, 100);
 
     /*
     // Parse the url to get the individual parts
