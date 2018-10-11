@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     }
 
     request.method = method;
+<<<<<<< HEAD
 
     char* newUrl = NULL;
     if(strcmp(extractProtocolFromURI(url), "http") == 0) {
@@ -67,6 +68,10 @@ int main(int argc, char *argv[]) {
     }
     
     request.requestURI = newUrl;
+=======
+    request.requestBody = NULL;
+    request.requestURI = url;
+>>>>>>> f362106813aee898d8fafd1cb4d8e38a25f9f549
     request.protocolVersion = "1.0";
     request.headers = NULL;
     request.headersSize = 0;
@@ -132,6 +137,10 @@ int main(int argc, char *argv[]) {
 
     sendMessage(message);
     receiveMessage(message, 100);
+<<<<<<< HEAD
+=======
+
+>>>>>>> f362106813aee898d8fafd1cb4d8e38a25f9f549
     /*
     // Parse the url to get the individual parts
     parse_url();
