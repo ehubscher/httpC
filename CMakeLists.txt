@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
-project("httpC")
+project("httpc")
 
 enable_testing()
 
@@ -18,15 +18,11 @@ if (NOT CONFIGURED_ONCE)
     set(CMAKE_C_FLAGS "${warnings}" CACHE STRING "Flags used by the compiler during all build types." FORCE)
 endif()
 
-add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(test)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-# include header-only library
-include_directories(lib/httpClientLibrary)
 
-add_executable(httpC-cli ${SOURCES})
-#target_link_libraries(httpc httpClientLibrary)
+add_executable(httpc ${SOURCES})
 
 set(CONFIGURED_ONCE TRUE CACHE INTERNAL "A flag showing that CMake has configured at least once.")

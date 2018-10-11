@@ -1,5 +1,4 @@
 #include "http.h"
-#include "httpRequest.h"
 #include "http-man.h"
 #include "httpc-helper.h"
 
@@ -12,6 +11,22 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
+    char* http_message = NULL;
+    char* request_line = NULL;
+    char* headers = NULL;
+    char* message_body = NULL;
+    
+    char method[8];
+    int option;
+    char* optstring;
+    int dflag = 0;
+    int fflag = 0;
+    int vflag = 0;
+    char* url = argv[argc - 1];
+    int sockfd;
+    
+    char* newUrl = NULL;
+
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
         if (argc < 3)
@@ -32,25 +47,19 @@ int main(int argc, char *argv[]) {
         }
         return 0;
     }
-
-    char* method;
-    int option;
-    char* optstring;
-    HttpRequest request;
-    HttpRequest* requestPtr = &request;
-    HttpMessage* message;
-    int dflag = 0;
-    int fflag = 0;
-    int vflag = 0;
-    char* url = argv[argc - 1];
-
+    
+    if(strcmp(extractProtocolFromURI(url), "http") == 0) {
+        newUrl = (char*)malloc(strlen(url) - 6);
+        memcpy(newUrl, url + 7, strlen(url) - 6);
+    }
+    
     if (strncmp(argv[1], "get", 3) == 0) {
-        method = "GET";
+        memcpy(method, "GET", 4);
         optstring = "vh:";
     }
 
     else if (strncmp(argv[1], "post", 4) == 0) {
-        method = "POST";
+        memcpy(method, "POST", 5);
         optstring = "vh:d:f:";
     }
 
@@ -58,23 +67,11 @@ int main(int argc, char *argv[]) {
         print_usage();
     }
 
-    request.method = method;
-<<<<<<< HEAD
-
-    char* newUrl = NULL;
-    if(strcmp(extractProtocolFromURI(url), "http") == 0) {
-        newUrl = (char*)malloc(strlen(url) - 6);
-        memcpy(newUrl, url + 7, strlen(url) - 6);
-    }
-    
-    request.requestURI = newUrl;
-=======
-    request.requestBody = NULL;
-    request.requestURI = url;
->>>>>>> f362106813aee898d8fafd1cb4d8e38a25f9f549
-    request.protocolVersion = "1.0";
-    request.headers = NULL;
-    request.headersSize = 0;
+    request_line = concat(request_line, method);
+    request_line = concat(request_line, " \0");
+    request_line = concat(request_line, newUrl);
+    request_line = concat(request_line, " \0");
+    request_line = concat(request_line, "HTTP/1.0\r\n");
 
     // starts evaluating options after argv[1]
     // argv[1] is help | get | post
@@ -85,10 +82,9 @@ int main(int argc, char *argv[]) {
                 vflag = 1;
                 break;
 
-            case 'h':
-                request.headersSize = request.headersSize + 1;
-                request.headers = (char**)realloc(request.headers, request.headersSize * sizeof(char*));
-                concat(request.headers[request.headersSize - 1], optarg); //atoi()
+            case 'h':                
+                headers = concat(headers, optarg);
+                headers = concat(headers, "\r\n");
                 break;
 
             case 'd':
@@ -99,8 +95,13 @@ int main(int argc, char *argv[]) {
                 else {
                     dflag++;
                     fflag++;
-                    request.requestBody = optarg;
-                    printf("Inline data has been associated to the request body: %s\n", request.requestBody);
+
+                    if (message_body != NULL) {
+                        message_body = concat(message_body, "&\0");
+                    }
+                    message_body = concat(message_body, optarg);
+                    
+                    printf("Inline data has been associated to the request body: %s\n", message_body);
                 }
                 break;
 
@@ -120,48 +121,35 @@ int main(int argc, char *argv[]) {
                     memcpy(tmpString, string, size);
                     free(string);
 
-                    request.requestBody = tmpString;
-                    if (request.requestBody) {
-                        printf("File data stored in request body: %s\n", request.requestBody);
+                    message_body = concat(message_body, tmpString);
+
+                    if (message_body) {
+                        printf("File data stored in request body: %s\n", message_body);
                     }
                 }
                 break;
 
             default:
-                printf("error");
+                print_usage();
         }
     }
 
-    message = constructHttpMessageFromRequest(requestPtr);
-    constructHttpMessage(message);
+    http_message = concat(http_message, request_line);
+    http_message = concat(http_message, headers);
+    http_message = concat(http_message, "\r\n");
+    http_message = concat(http_message, message_body);
 
-    sendMessage(message);
-    receiveMessage(message, 100);
-<<<<<<< HEAD
-=======
+    sockfd = sendMessage(http_message);
+    receiveMessage(sockfd, 100);
 
->>>>>>> f362106813aee898d8fafd1cb4d8e38a25f9f549
-    /*
-    // Parse the url to get the individual parts
-    parse_url();
+    // get response, format output
 
-    // open connection to server
-    make_connection();
+    close(sockfd);
 
-    // build a request object and send it
-    make_request();
+    free(http_message);
+    free(request_line);
+    free(headers);
+    free(message_body);
 
-    // get a response and make a response object
-    fetch_response();
-
-    // close the connection
-    close(socket);
-
-    // if -v
-    make_verbose();
-
-    // return the response
-    return_response();
-*/
     return 0;
 }

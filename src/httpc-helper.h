@@ -2,18 +2,134 @@
 #define HTTPC_HELPER
 #define CHUNK_SIZE 1024
 
-#include <httpRequest.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h> 
 
-/*
-    Receive data in multiple chunks by checking a non-blocking socket
-    Timeout in seconds
-*/
-int recv_timeout(int sockfd, int timeout);
-int recv_timeout(int sockfd, int timeout)
+struct addrinfo* getHostInfo(char* host);
+struct addrinfo* getHostInfo(char* host) {
+    char ipstr[INET6_ADDRSTRLEN];
+    int status;
+    struct addrinfo hints, *serverInfoResults, *resultsPtr; 
+
+    void *address;
+    char *IPVersion;
+
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_UNSPEC; // IPv4 | IPv6
+    hints.ai_socktype = SOCK_STREAM; // TCP
+
+    if ((status = getaddrinfo(host, "http", &hints, &serverInfoResults)) != 0) {
+        fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(status));
+        exit(1);
+    }
+
+    // serverInfoResults now points to a linked list of 1 or more struct addrinfo s.
+    // Do everything until you don't need serverInfo anymore.
+    resultsPtr = serverInfoResults;
+    while(resultsPtr != NULL) {
+        // get the pointer to the address itself,
+        // different fields in IPv4 and IPv6:
+        if (resultsPtr->ai_family == AF_INET) { // IPv4
+            struct sockaddr_in *ipv4 = (struct sockaddr_in *)resultsPtr->ai_addr;
+            address = &(ipv4->sin_addr);
+            IPVersion = "IPv4";
+        } else { // IPv6
+            struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)resultsPtr->ai_addr;
+            address = &(ipv6->sin6_addr);
+            IPVersion = "IPv6";
+        }
+
+        // convert the IP to a string and print it:
+        inet_ntop(resultsPtr->ai_family, address, ipstr, sizeof ipstr);
+        printf("  %s: %s\n", IPVersion, ipstr);
+
+        resultsPtr = resultsPtr->ai_next;
+    }
+
+    return serverInfoResults;
+}
+
+char* concat(char* s1, const char* s2);
+char* concat(char* s1, const char* s2)
 {
+    // Re-allocate memory for s1 to accomodate s2.
+    if(s1 == NULL && s2 == NULL) {
+        return NULL;
+    } else if(s1 == NULL) {
+        s1 = (char*)realloc(s1, strlen(s2) + 1);
+    } else if (s2 == NULL) {
+        return s1;
+    } else {
+        s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
+    }
+
+    if (s1 == NULL) {
+        fprintf(stderr, "ERROR: concat() - Failed to allocate memory for string concatenation.\n");
+        return NULL;
+    }
+
+    // Copy the character values from s2 into the remaining memory slots of result.
+    memcpy(s1 + strlen(s1), s2, strlen(s2) + 1);
+
+    return s1;
+}
+
+int createSocketFileDescriptor(struct addrinfo* serverInfoResults);
+int createSocketFileDescriptor(struct addrinfo* serverInfoResults) {
+    return socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
+}
+
+int canConnect(int sockfd, struct addrinfo* serverInfoResults);
+int canConnect(int sockfd, struct addrinfo* serverInfoResults) {
+    int connectResult;
+
+    int tryConnecting = 0;
+    while(tryConnecting < 100 && (connectResult = connect(sockfd, serverInfoResults->ai_addr, serverInfoResults->ai_addrlen) == -1)) {
+        tryConnecting = tryConnecting + 1;
+    }
+
+    if(connectResult == -1) {
+        return 1;
+    } else {
+        // serverInfoResults now points to a linked list of 1 or more struct addrinfos.
+        // Do everything until you don't need serverInfoResults anymore.
+        freeaddrinfo(serverInfoResults);
+        
+        return 0;
+    }
+}
+
+int sendMessage(char* http_message);
+int sendMessage(char* http_message) {
+    struct addrinfo *serverInfoResults = getHostInfo(http_message);
+    int sockfd = createSocketFileDescriptor(serverInfoResults);
+
+    int isConnected = canConnect(sockfd, serverInfoResults);
+
+    int messageLength = strlen(http_message);
+    int bytes_left = messageLength;
+    int bytes_sent;
+
+    while(bytes_left > 0) {
+        bytes_sent = send(sockfd, http_message, bytes_left, 0);
+        bytes_left = bytes_left - bytes_sent;
+    }
+    freeaddrinfo(serverInfoResults);
+    return sockfd;
+}
+
+int receiveMessage(int sockfd, int timeout);
+int receiveMessage(int sockfd, int timeout) {
     int size_recv, total_size = 0;
     struct timeval begin, now;
     char chunk[CHUNK_SIZE];
@@ -30,78 +146,31 @@ int recv_timeout(int sockfd, int timeout)
         timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
          
         //if you got some data, then break after timeout
-        if (total_size > 0 && timediff > timeout)
-        {
+        if (total_size > 0 && timediff > timeout) {
             break;
         }
          
         //if you got no data at all, wait a little longer, twice the timeout
-        else if (timediff > timeout*2)
-        {
+        else if (timediff > timeout*2) {
             break;
         }
          
         memset(chunk, 0, CHUNK_SIZE);  //clear the variable
-        if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) < 0)
-        {
+        if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) < 0) {
             //if nothing was received then we want to wait a little before trying again, 0.1 seconds
             usleep(100000);
         }
-        else
-        {
+
+        else {
             total_size += size_recv;
             printf("%s", chunk);
             //reset beginning time
             gettimeofday(&begin , NULL);
         }
     }
-     
+
     return total_size;
 }
-
-/*
-int fetch_response(int sockfd, Buffer **response, int recv_size);
-int fetch_response(int sockfd, Buffer **response, int recv_size)
-{
-    size_t bytes_received;
-    int status = 0;
-    char data[recv_size];
-
-    debug("Receiving data ...");
-
-    while (1) {
-        bytes_received = recv(sockfd, data, RECV_SIZE, 0);
-
-        if (bytes_received == -1) {
-            return -1;
-        } else if (bytes_received == 0) {
-            return 0;
-        }
-
-        if (bytes_received > 0) {
-            status = buffer_append(*response, data, bytes_received);
-            if (status != 0) {
-                fprintf(stderr, "Failed to append to buffer.\n");
-                return -1;
-            }
-        }
-    }
-
-    debug("Finished receiving data.");
-
-    return status;
-}*/
-
-/*HttpRequest build_request(HttpRequest request, char* method, char* url, int headersSize, char* headers[]);
-HttpRequest build_request(HttpRequest request, char* method, char* url, int headersSize, char* headers[]) {
-    request.method = method;
-    request.requestURI = url;
-    request.headersSize = headersSize;
-    request.headers = headers;
-
-    return request;
-}
-*/
 
 char* readFile(char *filename);
 char* readFile(char *filename)
