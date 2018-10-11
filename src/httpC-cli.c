@@ -51,6 +51,10 @@ int main(int argc, char *argv[]) {
     if(strcmp(extractProtocolFromURI(url), "http") == 0) {
         newUrl = (char*)malloc(strlen(url) - 6);
         memcpy(newUrl, url + 7, strlen(url) - 6);
+    } 
+    
+    else {
+        newUrl = url;
     }
     
     if (strncmp(argv[1], "get", 3) == 0) {
@@ -68,10 +72,10 @@ int main(int argc, char *argv[]) {
     }
 
     request_line = concat(request_line, method);
-    request_line = concat(request_line, " \0");
+    request_line = concat(request_line, " ");
     request_line = concat(request_line, newUrl);
-    request_line = concat(request_line, " \0");
-    request_line = concat(request_line, "HTTP/1.0\r\n");
+    request_line = concat(request_line, " ");
+    request_line = concat(request_line, "HTTP/1.0 \r\n");
 
     // starts evaluating options after argv[1]
     // argv[1] is help | get | post
@@ -97,7 +101,7 @@ int main(int argc, char *argv[]) {
                     fflag++;
 
                     if (message_body != NULL) {
-                        message_body = concat(message_body, "&\0");
+                        message_body = concat(message_body, "&");
                     }
                     message_body = concat(message_body, optarg);
                     
@@ -139,7 +143,7 @@ int main(int argc, char *argv[]) {
     http_message = concat(http_message, "\r\n");
     http_message = concat(http_message, message_body);
 
-    sockfd = sendMessage(http_message);
+    sockfd = sendMessage(http_message, newUrl);
     receiveMessage(sockfd, 100);
 
     // get response, format output

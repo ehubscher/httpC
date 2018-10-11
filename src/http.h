@@ -199,6 +199,31 @@ static const char* HTTP_REASON_PHRASES[HTTP_REASON_PHRASES_SIZE] = {
     "HTTP Version not supported"
 };
 
+char* concat(char* s1, const char* s2);
+char* concat(char* s1, const char* s2)
+{
+    // Re-allocate memory for s1 to accomodate s2.
+    if(s1 == NULL && s2 == NULL) {
+        return NULL;
+    } else if(s1 == NULL) {
+        s1 = (char*)realloc(s1, strlen(s2) + 1);
+    } else if (s2 == NULL) {
+        return s1;
+    } else {
+        s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
+    }
+
+    if (s1 == NULL) {
+        fprintf(stderr, "ERROR: concat() - Failed to allocate memory for string concatenation.\n");
+        return NULL;
+    }
+
+    // Copy the character values from s2 into the remaining memory slots of result.
+    memcpy(s1 + strlen(s1), s2, strlen(s2) + 1);
+
+    return s1;
+}
+
 char* capitalize(char* string, int size);
 char* capitalize(char* string, int size) {
     char* capitalizedString = (char*)malloc(size * sizeof(char) + 1);

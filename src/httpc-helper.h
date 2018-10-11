@@ -59,31 +59,6 @@ struct addrinfo* getHostInfo(char* host) {
     return serverInfoResults;
 }
 
-char* concat(char* s1, const char* s2);
-char* concat(char* s1, const char* s2)
-{
-    // Re-allocate memory for s1 to accomodate s2.
-    if(s1 == NULL && s2 == NULL) {
-        return NULL;
-    } else if(s1 == NULL) {
-        s1 = (char*)realloc(s1, strlen(s2) + 1);
-    } else if (s2 == NULL) {
-        return s1;
-    } else {
-        s1 = (char*)realloc(s1, strlen(s1) + strlen(s2) + 1);
-    }
-
-    if (s1 == NULL) {
-        fprintf(stderr, "ERROR: concat() - Failed to allocate memory for string concatenation.\n");
-        return NULL;
-    }
-
-    // Copy the character values from s2 into the remaining memory slots of result.
-    memcpy(s1 + strlen(s1), s2, strlen(s2) + 1);
-
-    return s1;
-}
-
 int createSocketFileDescriptor(struct addrinfo* serverInfoResults);
 int createSocketFileDescriptor(struct addrinfo* serverInfoResults) {
     return socket(serverInfoResults->ai_family, serverInfoResults->ai_socktype, serverInfoResults->ai_protocol);
@@ -109,12 +84,13 @@ int canConnect(int sockfd, struct addrinfo* serverInfoResults) {
     }
 }
 
-int sendMessage(char* http_message);
-int sendMessage(char* http_message) {
-    struct addrinfo *serverInfoResults = getHostInfo(http_message);
+int sendMessage(char* http_message, char* host);
+int sendMessage(char* http_message, char* host) {
+    struct addrinfo *serverInfoResults = getHostInfo(host);
+    
     int sockfd = createSocketFileDescriptor(serverInfoResults);
-
     int isConnected = canConnect(sockfd, serverInfoResults);
+    //freeaddrinfo(serverInfoResults);
 
     int messageLength = strlen(http_message);
     int bytes_left = messageLength;
@@ -124,7 +100,7 @@ int sendMessage(char* http_message) {
         bytes_sent = send(sockfd, http_message, bytes_left, 0);
         bytes_left = bytes_left - bytes_sent;
     }
-    freeaddrinfo(serverInfoResults);
+    
     return sockfd;
 }
 
@@ -146,17 +122,17 @@ int receiveMessage(int sockfd, int timeout) {
         timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
          
         //if you got some data, then break after timeout
-        if (total_size > 0 && timediff > timeout) {
+        if (total_size > 0 || timediff > timeout) {
             break;
         }
          
         //if you got no data at all, wait a little longer, twice the timeout
-        else if (timediff > timeout*2) {
+        else if (timediff > timeout * 2) {
             break;
         }
          
         memset(chunk, 0, CHUNK_SIZE);  //clear the variable
-        if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) < 0) {
+        if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) == -1) {
             //if nothing was received then we want to wait a little before trying again, 0.1 seconds
             usleep(100000);
         }
