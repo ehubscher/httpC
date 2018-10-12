@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
     } else {
         newUrl = url;
     }
+
+    char* host = extractHostFromURI(newUrl);
     
     if (strncmp(argv[1], "get", 3) == 0) {
         memcpy(method, "GET", 4);
@@ -61,9 +63,9 @@ int main(int argc, char *argv[]) {
 
     request_line = concat(request_line, method);
     request_line = concat(request_line, " ");
-    request_line = concat(request_line, newUrl);
+    request_line = concat(request_line, url);
     request_line = concat(request_line, " ");
-    request_line = concat(request_line, "HTTP/1.0 \r\n");
+    request_line = concat(request_line, "HTTP/1.1\r\n");
 
     // starts evaluating options after argv[1]
     // argv[1] is help | get | post
@@ -77,6 +79,12 @@ int main(int argc, char *argv[]) {
             case 'h':
                 headers = concat(headers, optarg);
                 headers = concat(headers, "\r\n");
+                
+                char* header = extractName(optarg);
+                if(strcmp(header, "Host") == 0) {
+                    host = extractValue(optarg);
+                }
+
                 break;
 
             case 'd':
@@ -119,7 +127,7 @@ int main(int argc, char *argv[]) {
                         printf("File data stored in request body: %s\n", message_body);
                     }
                 }
-                
+
                 break;
 
             default:
@@ -132,7 +140,7 @@ int main(int argc, char *argv[]) {
     http_message = concat(http_message, "\r\n");
     http_message = concat(http_message, message_body);
 
-    sockfd = sendMessage(http_message, newUrl);
+    sockfd = sendMessage(http_message, host);
     receiveMessage(sockfd, 100);
 
     // get response, format output

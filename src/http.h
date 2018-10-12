@@ -235,6 +235,38 @@ char* capitalize(char* string, int size) {
     return capitalizedString;
 }
 
+char* extractName(char* nameValuePair);
+char* extractName(char* nameValuePair) {
+    int length = strlen(nameValuePair) + 1;
+    char cpy[length];
+    memcpy(cpy, nameValuePair, length);
+
+    char* token = strtok(cpy, ":");
+    if(token != NULL) {
+        return token;
+    }
+}
+
+char* extractValue(char* nameValuePair);
+char* extractValue(char* nameValuePair) {
+    int length = strlen(nameValuePair) + 1;
+    char* cpy = (char*)malloc(length * sizeof(char));
+    memcpy(cpy, nameValuePair, length);
+
+    char* token = strtok(cpy, ":");
+    if(token != NULL) {
+        token = strtok(NULL, ":");
+        if(token[0] == ' ') {
+            cpy = (char*)realloc(cpy, strlen(token) + 1);
+            memcpy(cpy, token + 1, strlen(token) + 1);
+
+            return cpy;
+        }
+        
+        return token;
+    }
+}
+
 char* removeProtocolFromURI(char* URI);
 char* removeProtocolFromURI(char* URI) {
     int URISize = strlen(URI) + 1;
@@ -266,17 +298,11 @@ char* extractHostFromURI(char* URI) {
     int URISize = strlen(URI) + 1;
     char URIcpy[URISize];
     memcpy(URIcpy, URI, URISize);
-    char* result;
+    char* result = NULL;
 
-    char* token = strtok(URIcpy, "www");
+    char* token = strtok(URIcpy, "/");
     if(token != NULL) {
-        token = strtok(NULL, "/");
-        
-        if(token != NULL) {
-            return concat(result, token);
-        } else {
-            return NULL;
-        }
+        return concat(result, token);
     } else {
         return NULL;
     }
@@ -329,7 +355,6 @@ int getSlashCountOnPathFromURI(char* URI) {
 
 char* extractPathFromURI(char* URI);
 char* extractPathFromURI(char* URI) {
-    int slashCount = getSlashCountOnPathFromURI(URI);
     int URISize = strlen(URI) + 1;
     char URIcpy[URISize];
     memcpy(URIcpy, URI, URISize);
@@ -337,38 +362,8 @@ char* extractPathFromURI(char* URI) {
 
     char* token = strtok(URIcpy, "/");
     if(token != NULL) {
-        token = strtok(NULL, "/");
+        return token;
     }
-
-    while(token != NULL) {
-        char* www = strstr(token, "www");
-        if(www != NULL) {
-            token = strtok(NULL, ".");
-        }
-
-        token = strtok(NULL, "/");
-        char* tmpToken = NULL;
-        while(token != NULL) {
-            tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
-            strcpy(tmpToken, token);
-
-            result = concat(result, tmpToken);
-            token = strtok(NULL, "/");
-
-            if(token != NULL) {
-                result = concat(result, "/");
-            }
-        }
-
-        tmpToken = strtok(tmpToken, "?");
-        if(tmpToken != NULL) {
-            result = strtok(result, "?");
-        }
-
-        free(tmpToken);
-    }
-
-    return result;
 }
 
 int getQueryStringParamSize(char* URI);

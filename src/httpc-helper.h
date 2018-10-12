@@ -73,24 +73,21 @@ int canConnect(int sockfd, struct addrinfo* serverInfoResults) {
         tryConnecting = tryConnecting + 1;
     }
 
-    if(connectResult == -1) {
-        return 1;
-    } else {
-        // serverInfoResults now points to a linked list of 1 or more struct addrinfos.
-        // Do everything until you don't need serverInfoResults anymore.
-        freeaddrinfo(serverInfoResults);
-        
-        return 0;
-    }
+    return connectResult;
 }
 
 int sendMessage(char* http_message, char* host);
 int sendMessage(char* http_message, char* host) {
     struct addrinfo *serverInfoResults = getHostInfo(host);
-    
     int sockfd = createSocketFileDescriptor(serverInfoResults);
     int isConnected = canConnect(sockfd, serverInfoResults);
-    //freeaddrinfo(serverInfoResults);
+    
+    if(isConnected == -1) {
+        fprintf(stdout, "Currently cannot connect to server: %s\n", serverInfoResults);
+        exit(1);
+    }
+
+    freeaddrinfo(serverInfoResults);
 
     int messageLength = strlen(http_message);
     int bytes_left = messageLength;
@@ -114,30 +111,25 @@ int receiveMessage(int sockfd, int timeout) {
     //beginning time
     gettimeofday(&begin, NULL);
      
-    while(1)
-    {
+    while(1) {
         gettimeofday(&now, NULL);
-         
+
         //time elapsed in seconds
         timediff = (now.tv_sec - begin.tv_sec) + 1e-6 * (now.tv_usec - begin.tv_usec);
          
-        //if you got some data, then break after timeout
+        // If you got some data, then break after timeout.
+        // Otherwise, wait a little longer, twice the timeout.
         if (total_size > 0 || timediff > timeout) {
             break;
-        }
-         
-        //if you got no data at all, wait a little longer, twice the timeout
-        else if (timediff > timeout * 2) {
+        } else if (timediff > timeout * 2) {
             break;
         }
-         
-        memset(chunk, 0, CHUNK_SIZE);  //clear the variable
+        
+        memset(chunk, 0, CHUNK_SIZE);
         if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) == -1) {
-            //if nothing was received then we want to wait a little before trying again, 0.1 seconds
+            // If nothing was received then we want to wait a little before trying again, 0.1 seconds
             usleep(100000);
-        }
-
-        else {
+        } else {
             total_size += size_recv;
             printf("%s", chunk);
             //reset beginning time
