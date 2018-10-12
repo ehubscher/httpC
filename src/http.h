@@ -331,6 +331,10 @@ int getSlashCountOnPathFromURI(char* URI) {
         char* tmpToken = NULL;
         while(token != NULL) {
             tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
+            if(tmpToken == NULL) {
+                fprintf(stderr, "ERROR: realloc() returned NULL.");
+                exit(1);
+            }
             strcpy(tmpToken, token);
 
             result = concat(result, tmpToken);
@@ -405,6 +409,10 @@ char** extractQueryStringFromURI(char* URI) {
         
         if(token != NULL) {
             tmpToken = (char*)realloc(tmpToken, strlen(token) + 1);
+            if(tmpToken == NULL) {
+                fprintf(stderr, "ERROR: realloc() returned NULL.");
+                exit(1);
+            }
             strcpy(tmpToken, token);
             memcpy(params[i], tmpToken, strlen(tmpToken));
         }

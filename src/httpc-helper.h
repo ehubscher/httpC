@@ -101,13 +101,60 @@ int sendMessage(char* http_message, char* host) {
     return sockfd;
 }
 
-int receiveMessage(int sockfd, int timeout);
-int receiveMessage(int sockfd, int timeout) {
+char* getresponsebody(char* response_msg);
+char* getresponsebody(char* response_msg) {
+    char* token = (char*)malloc(sizeof(char));;
+    int resp_msg_len = strlen(response_msg);
+    int CRLF_terminator_cnt = 0;
+    int LF_counter = 0;
+    int total_token_size = 0;
+    char* resp_msg_copy = (char*)malloc(resp_msg_len * sizeof(char) + 1);
+    char* not_resp_body = (char*)malloc(sizeof(char));
+    char* resp_body = (char*)malloc(sizeof(char));;
+
+    memcpy(resp_msg_copy, response_msg, resp_msg_len + 1);
+    
+    token = strtok(resp_msg_copy, "\n");
+    while (token != NULL) {
+        LF_counter = LF_counter + 1;
+        CRLF_terminator_cnt = CRLF_terminator_cnt + 1;
+
+        total_token_size = total_token_size + strlen(token);
+        not_resp_body = (char*)realloc(not_resp_body, total_token_size + 1);
+        if(not_resp_body == NULL) {
+            fprintf(stderr, "ERROR: realloc() returned NULL.");
+            exit(1);
+        }
+
+        memcpy(not_resp_body + total_token_size, token, strlen(token));
+
+        if (strcmp(token, "\r") == 0 && CRLF_terminator_cnt > 1) {
+            realloc(resp_body, total_token_size + LF_counter * sizeof("\n") + 1);
+            if(resp_body == NULL) {
+                fprintf(stderr, "ERROR: realloc() returned NULL.");
+                exit(1);
+            }
+
+            memcpy(resp_body + total_token_size + LF_counter * sizeof("\n"), response_msg, total_token_size + LF_counter * sizeof("\n")  + 1);
+        }
+        else {
+            CRLF_terminator_cnt = 0;
+        }
+
+        token = strtok(NULL, "\n");
+    }
+}
+
+int receiveMessage(int sockfd, int timeout, int verbose);
+int receiveMessage(int sockfd, int timeout, int verbose) {
     int size_recv, total_size = 0;
     struct timeval begin, now;
     char chunk[CHUNK_SIZE];
     double timediff;
-     
+    char* response_msg = (char*)malloc(sizeof(char*));
+    int chunk_counter = 0;
+    char* response_body = NULL;
+
     //beginning time
     gettimeofday(&begin, NULL);
      
@@ -124,17 +171,31 @@ int receiveMessage(int sockfd, int timeout) {
         } else if (timediff > timeout * 2) {
             break;
         }
-        
+
         memset(chunk, 0, CHUNK_SIZE);
         if((size_recv =  recv(sockfd, chunk, CHUNK_SIZE , 0) ) == -1) {
             // If nothing was received then we want to wait a little before trying again, 0.1 seconds
             usleep(100000);
         } else {
             total_size += size_recv;
-            printf("%s", chunk);
+            realloc(response_msg, (chunk_counter * CHUNK_SIZE) + size_recv + 1);
+            if(response_msg == NULL) {
+                fprintf(stderr, "ERROR: realloc() returned NULL.");
+                exit(1);
+            }
+
+            memcpy(response_msg + (chunk_counter * CHUNK_SIZE), chunk, size_recv + 1);
+            chunk_counter = chunk_counter + 1;
             //reset beginning time
             gettimeofday(&begin , NULL);
         }
+    }
+    if (verbose) {
+        printf("%s", response_msg);
+    }
+    else {
+        response_body = getresponsebody(response_msg);
+        printf("%s", response_body);
     }
 
     return total_size;

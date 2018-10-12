@@ -12,7 +12,7 @@ void print_usage() {
 
 int main(int argc, char *argv[]) {
     char* url = argv[argc - 1];
-    char* newUrl = NULL;
+    char* newUrl = (char*)malloc(sizeof(char));;
     char method[8];
     int sockfd;
 
@@ -22,10 +22,10 @@ int main(int argc, char *argv[]) {
     int fflag = 0;
     int vflag = 0;
 
-    char* http_message = NULL;
-    char* request_line = NULL;
-    char* headers = NULL;
-    char* message_body = NULL;
+    char* http_message = (char*)malloc(sizeof(char));;
+    char* request_line = (char*)malloc(sizeof(char));;
+    char* headers = (char*)malloc(sizeof(char));;
+    char* message_body = (char*)malloc(sizeof(char));;
 
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
     http_message = concat(http_message, message_body);
 
     sockfd = sendMessage(http_message, host);
-    receiveMessage(sockfd, 100);
+    receiveMessage(sockfd, 100, vflag);
 
     // get response, format output
 
