@@ -2,6 +2,7 @@
 #include "http-man.h"
 #include "httpc-helper.h"
 
+#include <curl/curl.h>
 #include <unistd.h>
 #include <getopt.h>
 
@@ -11,21 +12,26 @@ void print_usage() {
 }
 
 int main(int argc, char *argv[]) {
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
     char* url = argv[argc - 1];
-    char* newUrl = (char*)malloc(sizeof(char));;
-    char method[8];
-    int sockfd;
 
     int option;
     char* optstring;
     int dflag = 0;
     int fflag = 0;
-    int vflag = 0;
 
-    char* http_message = (char*)malloc(sizeof(char));;
-    char* request_line = (char*)malloc(sizeof(char));;
-    char* headers = (char*)malloc(sizeof(char));;
-    char* message_body = (char*)malloc(sizeof(char));;
+    char* http_message = (char*)malloc(sizeof(char));
+    char* request_line = (char*)malloc(sizeof(char));
+
+    struct curl_slist headers;
+    struct curl_slist* headersPtr = NULL;
+    
+    char* message_body = NULL;//(char*)malloc(sizeof(char));
 
     // returns the appropriate help man
     if (strncmp(argv[1], "help", 4) == 0) {
@@ -42,30 +48,14 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    if(strcmp(extractProtocolFromURI(url), "http") == 0) {
-        newUrl = (char*)malloc(strlen(url) - 6);
-        memcpy(newUrl, url + 7, strlen(url) - 6);
-    } else {
-        newUrl = url;
-    }
-
-    char* host = extractHostFromURI(newUrl);
-    
+    curl_easy_setopt(curl, CURLOPT_URL, url);
     if (strncmp(argv[1], "get", 3) == 0) {
-        memcpy(method, "GET", 4);
         optstring = "vh:";
     } else if (strncmp(argv[1], "post", 4) == 0) {
-        memcpy(method, "POST", 5);
         optstring = "vh:d:f:";
     } else {
         print_usage();
     }
-
-    request_line = concat(request_line, method);
-    request_line = concat(request_line, " ");
-    request_line = concat(request_line, url);
-    request_line = concat(request_line, " ");
-    request_line = concat(request_line, "HTTP/1.1\r\n");
 
     // starts evaluating options after argv[1]
     // argv[1] is help | get | post
@@ -73,17 +63,15 @@ int main(int argc, char *argv[]) {
     while ((option = getopt(argc, argv, optstring)) != -1) {
         switch (option) {
             case 'v':
-                vflag = 1;
+                curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
                 break;
 
             case 'h':
-                headers = concat(headers, optarg);
-                headers = concat(headers, "\r\n");
-                
-                char* header = extractName(optarg);
-                if(strcmp(header, "Host") == 0) {
-                    host = extractValue(optarg);
+                if(headersPtr == NULL) {
+                    headersPtr = &headers;
                 }
+
+                curl_slist_append(headersPtr, optarg);
 
                 break;
 
@@ -92,13 +80,11 @@ int main(int argc, char *argv[]) {
                     printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 } else {
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, optarg);
+
                     dflag++;
                     fflag++;
 
-                    if (message_body != NULL) {
-                        message_body = concat(message_body, "&");
-                    }
-                    
                     message_body = concat(message_body, optarg);
 
                     printf("Inline data has been associated to the request body: %s\n", message_body);
@@ -119,13 +105,10 @@ int main(int argc, char *argv[]) {
                     
                     char tmpString[size];
                     memcpy(tmpString, string, size);
-                    free(string);
 
-                    message_body = concat(message_body, tmpString);
+                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, string);
 
-                    if (message_body) {
-                        printf("File data stored in request body: %s\n", message_body);
-                    }
+                   //free(string);
                 }
 
                 break;
@@ -135,22 +118,16 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    http_message = concat(http_message, request_line);
-    http_message = concat(http_message, headers);
-    http_message = concat(http_message, "\r\n");
-    http_message = concat(http_message, message_body);
-
-    sockfd = sendMessage(http_message, host);
-    receiveMessage(sockfd, 100, vflag);
-
-    // get response, format output
-
-    close(sockfd);
-
-    free(http_message);
-    free(request_line);
-    free(headers);
-    free(message_body);
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers); 
+    /* Perform the request, res will get the return code */
+    res = curl_easy_perform(curl);
+    /* Check for errors */ 
+    if(res != CURLE_OK) {
+        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    }
+    
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
 
     return 0;
 }

@@ -125,6 +125,8 @@ char* getresponsebody(char* response_msg) {
 
             memcpy(resp_body, response_msg + total_token_size - 1, resp_msg_len - total_token_size  + 1);
 
+            token = NULL;
+            resp_msg_copy = NULL;
             free(token);
             free(resp_msg_copy);
 
@@ -152,7 +154,7 @@ int receiveMessage(int sockfd, int timeout, int verbose) {
 
     //beginning time
     gettimeofday(&begin, NULL);
-     
+
     while(1) {
         gettimeofday(&now, NULL);
 
@@ -192,6 +194,9 @@ int receiveMessage(int sockfd, int timeout, int verbose) {
         response_body = getresponsebody(response_msg);
         printf("%s", response_body);
     }
+
+    response_msg = NULL;
+    free(response_msg);
 
     return total_size;
 }
