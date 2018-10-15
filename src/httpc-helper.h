@@ -103,46 +103,41 @@ int sendMessage(char* http_message, char* host) {
 
 char* getresponsebody(char* response_msg);
 char* getresponsebody(char* response_msg) {
-    char* token = (char*)malloc(sizeof(char));;
+    char* token = (char*)malloc(sizeof(char) + 1);
     int resp_msg_len = strlen(response_msg);
-    int CRLF_terminator_cnt = 0;
-    int LF_counter = 0;
     int total_token_size = 0;
     char* resp_msg_copy = (char*)malloc(resp_msg_len * sizeof(char) + 1);
-    char* not_resp_body = (char*)malloc(sizeof(char));
-    char* resp_body = (char*)malloc(sizeof(char));;
+    char* resp_body = (char*)malloc(sizeof(char) + 1);
 
     memcpy(resp_msg_copy, response_msg, resp_msg_len + 1);
-    
+
     token = strtok(resp_msg_copy, "\n");
     while (token != NULL) {
-        LF_counter = LF_counter + 1;
-        CRLF_terminator_cnt = CRLF_terminator_cnt + 1;
+        total_token_size = total_token_size + strlen(token) + 1;
+        if (strcmp(token, "\r") == 0) {
+            total_token_size = total_token_size + strlen(token);
 
-        total_token_size = total_token_size + strlen(token);
-        not_resp_body = (char*)realloc(not_resp_body, total_token_size + 1);
-        if(not_resp_body == NULL) {
-            fprintf(stderr, "ERROR: realloc() returned NULL.");
-            exit(1);
-        }
-
-        memcpy(not_resp_body + total_token_size, token, strlen(token));
-
-        if (strcmp(token, "\r") == 0 && CRLF_terminator_cnt > 1) {
-            realloc(resp_body, total_token_size + LF_counter * sizeof("\n") + 1);
+            resp_body = (char*)realloc(resp_body, resp_msg_len + 1);
             if(resp_body == NULL) {
                 fprintf(stderr, "ERROR: realloc() returned NULL.");
                 exit(1);
             }
 
-            memcpy(resp_body + total_token_size + LF_counter * sizeof("\n"), response_msg, total_token_size + LF_counter * sizeof("\n")  + 1);
-        }
-        else {
-            CRLF_terminator_cnt = 0;
+            memcpy(resp_body, response_msg + total_token_size - 1, resp_msg_len - total_token_size  + 1);
+
+            free(token);
+            free(resp_msg_copy);
+
+            return resp_body;
         }
 
         token = strtok(NULL, "\n");
     }
+
+    free(token);
+    free(resp_msg_copy);
+
+    return NULL;
 }
 
 int receiveMessage(int sockfd, int timeout, int verbose);
