@@ -5,6 +5,7 @@
 #include <curl/curl.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <stdlib.h>
 
 void print_usage() {
     printf("Usage: httpc get [-v] [-h key:value] URL | httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n");
@@ -52,6 +53,10 @@ int main(int argc, char *argv[]) {
     if (strncmp(argv[1], "get", 3) == 0) {
         optstring = "vh:";
     } else if (strncmp(argv[1], "post", 4) == 0) {
+        if(headersPtr == NULL) {
+            headersPtr = &headers;
+        }
+
         optstring = "vh:d:f:";
     } else {
         print_usage();
@@ -80,7 +85,12 @@ int main(int argc, char *argv[]) {
                     printf("Either [-d] or [-f] can be used but not both.\n");
                     help(2);
                 } else {
-                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, optarg);
+                    int contentLength = strlen(optarg);
+                    char* contentLengthCharArr = (char*)malloc(sizeof(char) * 100);
+                    sprintf(contentLengthCharArr, "Content-Length: %i", contentLength);
+
+                    curl_slist_append(headersPtr, contentLengthCharArr);
+                    curl_easy_setopt(curl, CURLOPT_POST, optarg);
 
                     dflag++;
                     fflag++;
@@ -106,7 +116,13 @@ int main(int argc, char *argv[]) {
                     char tmpString[size];
                     memcpy(tmpString, string, size);
 
-                   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, string);
+                    int contentLength = strlen(optarg);
+                    char* contentLengthCharArr = NULL;
+                    concat(contentLengthCharArr, "Content-Length: ");
+                    concat(contentLengthCharArr, string);
+
+                    curl_slist_append(headersPtr, contentLengthCharArr);
+                   curl_easy_setopt(curl, CURLOPT_POST, string);
 
                    //free(string);
                 }

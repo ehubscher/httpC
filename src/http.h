@@ -256,26 +256,13 @@ char* extractValue(char* nameValuePair) {
     char* token = strtok(cpy, ":");
     if(token != NULL) {
         token = strtok(NULL, ":");
+        cpy = (char*)realloc(cpy, strlen(token) + 1);
         if(token[0] == ' ') {
-            cpy = (char*)realloc(cpy, strlen(token) + 1);
             memcpy(cpy, token + 1, strlen(token) + 1);
-
             return cpy;
         }
         
         return token;
-    }
-}
-
-char* removeProtocolFromURI(char* URI);
-char* removeProtocolFromURI(char* URI) {
-    int URISize = strlen(URI) + 1;
-    char URIcpy[URISize];
-    memcpy(URIcpy, URI, URISize);
-
-    char* token = strtok(URIcpy, "/");
-    if(token != NULL) {
-        token = strtok(NULL, "/");
     }
 }
 
